@@ -6,12 +6,6 @@ A browser-based Minecraft-like game built with HTML5, Three.js, and JavaScript.
 
 Raayan Craft 2 is a voxel-based sandbox game that runs directly in your web browser. It features block-based terrain generation, multiplayer support, inventory management, and various game mechanics similar to Minecraft.
 
-## 🎮 Play Now
-
-**[Play Raayan Craft 2 Online](https://raayancoding.github.io/raayan-craft-2/)**
-
-Simply click the link above to start playing in your browser. No installation required!
-
 ## Features
 
 - **Voxel-Based Gameplay** - Break and place blocks to shape your world
