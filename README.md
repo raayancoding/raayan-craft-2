@@ -8,9 +8,7 @@ Raayan Craft 2 is a voxel-based sandbox game that runs directly in your web brow
 
 ## 🎮 Play Now
 
-**[Play Raayan Craft 2 Online](https://raayancoding.github.io/raayan-craft-2/)**
-
-Simply click the link above to start playing in your browser. No installation required!
+See the [Getting Started](#getting-started) section below to run the game locally!
 
 ## Features
 
