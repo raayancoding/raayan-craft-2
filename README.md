@@ -8,7 +8,9 @@ Raayan Craft 2 is a voxel-based sandbox game that runs directly in your web brow
 
 ## 🎮 Play Now
 
-See the [Getting Started](#getting-started) section below to run the game locally!
+# https://raayancoding.github.io/raayan-craft-2/
+
+
 
 ## Features
 
@@ -39,20 +41,7 @@ raayancraft-2/
 │   └── resources/         # Game assets (textures, sounds, GUIs)
 ```
 
-## Getting Started
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/raayancoding/raayan-craft-2.git
-   cd raayan-craft-2
-   ```
-
-2. **Open in Browser**
-   - Open `index.html` in a modern web browser
-   - Or serve via a local web server:
-     ```bash
-     python -m http.server 8000
-     # Then navigate to http://localhost:8000
+hen navigate to http://localhost:8000
      ```
 
 ## Controls
