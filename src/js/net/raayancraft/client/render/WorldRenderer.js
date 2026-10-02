@@ -12,26 +12,26 @@ export default class WorldRenderer {
 
     static THIRD_PERSON_DISTANCE = 4;
 
-    constructor(minecraft, window) {
-        this.minecraft = minecraft;
+    constructor(rayancraft, window) {
+        this.rayancraft = rayancraft;
         this.window = window;
         this.chunkSectionUpdateQueue = [];
 
         this.tessellator = new Tessellator();
 
         // Load terrain texture
-        this.textureTerrain = minecraft.getThreeTexture('terrain/terrain.png');
+        this.textureTerrain = rayancraft.getThreeTexture('terrain/terrain.png');
         this.textureTerrain.magFilter = THREE.NearestFilter;
         this.textureTerrain.minFilter = THREE.LinearMipMapLinearFilter;
         this.textureTerrain.generateMipmaps = true;
 
         // Load sun texture
-        this.textureSun = minecraft.getThreeTexture('terrain/sun.png');
+        this.textureSun = rayancraft.getThreeTexture('terrain/sun.png');
         this.textureSun.magFilter = THREE.LinearFilter;
         this.textureSun.minFilter = THREE.LinearMipMapLinearFilter;
 
         // Load moon texture
-        this.textureMoon = minecraft.getThreeTexture('terrain/moon.png');
+        this.textureMoon = rayancraft.getThreeTexture('terrain/moon.png');
         this.textureMoon.magFilter = THREE.LinearFilter;
         this.textureMoon.minFilter = THREE.LinearMipMapLinearFilter;
 
@@ -55,6 +55,37 @@ export default class WorldRenderer {
         this.initialize();
     }
 
+    applyGraphicsPreset() {
+        // Ultra / High / Low graphics presets (called on boot + from Options)
+        try {
+            const q = (this.rayancraft.settings && this.rayancraft.settings.graphicsQuality) || "ultra";
+            const ratio = q === "low" ? 1 : q === "high" ? Math.min(window.devicePixelRatio || 1, 1.5) : Math.min(window.devicePixelRatio || 1, 2);
+            if (this.webRenderer.setPixelRatio) this.webRenderer.setPixelRatio(ratio);
+            const shadows = q !== "low" && this.rayancraft.settings.shadowsEnabled !== false;
+            this.webRenderer.shadowMap.enabled = shadows;
+            this.webRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            if (this.webRenderer.shadowMap.mapSize) {
+                const size = q === "ultra" ? 4096 : 2048;
+                // Changing map size at runtime needs shadow map disposal
+                if (this.webRenderer.shadowMap.mapSize.width !== size && this.webRenderer.shadowMap.map) {
+                    this.webRenderer.shadowMap.map.dispose();
+                    this.webRenderer.shadowMap.map = null;
+                }
+                this.webRenderer.shadowMap.mapSize.width = size;
+                this.webRenderer.shadowMap.mapSize.height = size;
+            }
+            // Crisp ultra textures: max anisotropy on the terrain atlas
+            try {
+                const max = this.webRenderer.capabilities.getMaxAnisotropy();
+                if (this.textureTerrain) {
+                    this.textureTerrain.anisotropy = q === "low" ? 1 : max;
+                    this.textureTerrain.needsUpdate = true;
+                }
+            } catch (e) { }
+            if (this.window) this.window.updateWindowSize();
+        } catch (e) { }
+    }
+
     initialize() {
         // Create world camera
         this.camera = new THREE.PerspectiveCamera(0, 1, 0.001, 1000);
@@ -76,25 +107,20 @@ export default class WorldRenderer {
         this.overlay = new THREE.Scene();
         this.overlay.matrixAutoUpdate = false;
 
-        // Create web renderer with enhanced graphics settings for 2026 quality
+        // Create web renderer with ultra graphics settings
         this.webRenderer = new THREE.WebGLRenderer({
             canvas: this.window.canvasWorld,
             antialias: true,
-            alpha: true
+            alpha: true,
+            powerPreference: "high-performance"
         });
 
-        // Settings will be applied in updateWindowSize when dimensions are available
-        this.webRenderer.shadowMap.enabled = true;
-        this.webRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        if (this.webRenderer.shadowMap.mapSize) {
-            this.webRenderer.shadowMap.mapSize.width = 2048;
-            this.webRenderer.shadowMap.mapSize.height = 2048;
-        }
+        this.applyGraphicsPreset();
         this.webRenderer.autoClear = false;
         this.webRenderer.sortObjects = false;
         this.webRenderer.setClearColor(0x000000, 0);
         this.webRenderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.webRenderer.toneMappingExposure = 1.0;
+        this.webRenderer.toneMappingExposure = 1.1;
 
         // Create sky
         this.generateSky();
@@ -113,7 +139,7 @@ export default class WorldRenderer {
         this.orientCamera(partialTicks);
 
         // Render chunks
-        let player = this.minecraft.player;
+        let player = this.rayancraft.player;
         let cameraChunkX = Math.floor(player.x) >> 4;
         let cameraChunkZ = Math.floor(player.z) >> 4;
         this.renderChunks(cameraChunkX, cameraChunkZ);
@@ -125,16 +151,16 @@ export default class WorldRenderer {
         this.renderBlockHitBox(player, partialTicks);
 
         // Render particles
-        this.minecraft.particleRenderer.renderParticles(player, partialTicks);
+        this.rayancraft.particleRenderer.renderParticles(player, partialTicks);
 
         // Hide all entities and make them visible during rendering
-        for (let entity of this.minecraft.world.entities) {
+        for (let entity of this.rayancraft.world.entities) {
             entity.renderer.group.visible = false;
         }
 
         // Render entities
-        for (let entity of this.minecraft.world.entities) {
-            if (entity === player && this.minecraft.settings.thirdPersonView === 0) {
+        for (let entity of this.rayancraft.world.entities) {
+            if (entity === player && this.rayancraft.settings.thirdPersonView === 0) {
                 continue;
             }
 
@@ -173,7 +199,7 @@ export default class WorldRenderer {
         this.prevFogBrightness = this.fogBrightness;
         this.prevEquippedProgress = this.equippedProgress;
 
-        let player = this.minecraft.player;
+        let player = this.rayancraft.player;
         let itemStack = player.inventory.getItemInSelectedSlot();
 
         let showHand = false;
@@ -195,14 +221,14 @@ export default class WorldRenderer {
         }
 
         // Update fog brightness
-        let brightnessAtPosition = this.minecraft.world.getLightBrightnessForEntity(player);
-        let renderDistance = this.minecraft.settings.viewDistance / 32.0;
+        let brightnessAtPosition = this.rayancraft.world.getLightBrightnessForEntity(player);
+        let renderDistance = this.rayancraft.settings.viewDistance / 32.0;
         let fogBrightness = brightnessAtPosition * (1.0 - renderDistance) + renderDistance;
         this.fogBrightness += (fogBrightness - this.fogBrightness) * 0.1;
     }
 
     orientCamera(partialTicks) {
-        let player = this.minecraft.player;
+        let player = this.rayancraft.player;
 
         // Reset rotation stack
         let stack = this.camera;
@@ -217,7 +243,7 @@ export default class WorldRenderer {
         let pitch = player.prevRotationPitch + (player.rotationPitch - player.prevRotationPitch) * partialTicks;
 
         // Add camera offset
-        let mode = this.minecraft.settings.thirdPersonView;
+        let mode = this.rayancraft.settings.thirdPersonView;
         if (mode !== 0) {
             let distance = WorldRenderer.THIRD_PERSON_DISTANCE;
             let frontView = mode === 2;
@@ -246,7 +272,7 @@ export default class WorldRenderer {
                 to = to.addVector(offsetX, offsetY, offsetZ);
 
                 // Make ray trace
-                let target = this.minecraft.world.rayTraceBlocks(from, to);
+                let target = this.rayancraft.world.rayTraceBlocks(from, to);
                 if (target === null) {
                     continue;
                 }
@@ -279,12 +305,12 @@ export default class WorldRenderer {
         stack.position.set(x, y, z);
 
         // Apply bobbing animation
-        if (mode === 0 && this.minecraft.settings.viewBobbing) {
+        if (mode === 0 && this.rayancraft.settings.viewBobbing) {
             this.bobbingAnimation(player, stack, partialTicks);
         }
 
         // Update FOV
-        this.camera.fov = this.minecraft.settings.fov + player.getFOVModifier();
+        this.camera.fov = this.rayancraft.settings.fov + player.getFOVModifier();
         this.camera.updateProjectionMatrix();
 
         // Update frustum
@@ -492,7 +518,7 @@ export default class WorldRenderer {
         this.backgroundCenter.position.copy(this.camera.position);
 
         // Rotate sky cycle
-        let angle = this.minecraft.world.getCelestialAngle(partialTicks);
+        let angle = this.rayancraft.world.getCelestialAngle(partialTicks);
         this.cycleGroup.rotation.set(angle * Math.PI * 2 + Math.PI / 2, 0, 0);
     }
 
@@ -502,10 +528,10 @@ export default class WorldRenderer {
             this.background.background = color;
             this.scene.fog = new THREE.Fog(color, 0.0025, 5);
         } else {
-            let world = this.minecraft.world;
+            let world = this.rayancraft.world;
 
-            let viewDistance = this.minecraft.settings.viewDistance * ChunkSection.SIZE;
-            let viewFactor = 1.0 - Math.pow(0.25 + 0.75 * this.minecraft.settings.viewDistance / 32.0, 0.25);
+            let viewDistance = this.rayancraft.settings.viewDistance * ChunkSection.SIZE;
+            let viewFactor = 1.0 - Math.pow(0.25 + 0.75 * this.rayancraft.settings.viewDistance / 32.0, 0.25);
 
             let angle = world.getCelestialAngle(partialTicks);
 
@@ -559,8 +585,8 @@ export default class WorldRenderer {
     }
 
     renderChunks(cameraChunkX, cameraChunkZ) {
-        let world = this.minecraft.world;
-        let renderDistance = this.minecraft.settings.viewDistance;
+        let world = this.rayancraft.world;
+        let renderDistance = this.rayancraft.settings.viewDistance;
 
         // Update chunks
         for (let [index, chunk] of world.getChunkProvider().getChunks()) {
@@ -641,7 +667,7 @@ export default class WorldRenderer {
     }
 
     rebuildAll() {
-        let world = this.minecraft.world;
+        let world = this.rayancraft.world;
         for (let [index, chunk] of world.getChunkProvider().getChunks()) {
             chunk.setModifiedAllSections();
         }
@@ -649,11 +675,11 @@ export default class WorldRenderer {
 
     renderHand(partialTicks) {
         // Hide hand before rendering
-        let player = this.minecraft.player;
+        let player = this.rayancraft.player;
         let stack = player.renderer.firstPersonGroup;
         stack.visible = false;
 
-        let firstPerson = this.minecraft.settings.thirdPersonView === 0;
+        let firstPerson = this.rayancraft.settings.thirdPersonView === 0;
         let itemId = firstPerson ? this.itemToRender : player.inventory.getItemInSelectedSlot();
         let hasItem = itemId !== 0;
 
@@ -677,7 +703,7 @@ export default class WorldRenderer {
         let yawArm = player.prevRenderArmYaw + (player.renderArmYaw - player.prevRenderArmYaw) * partialTicks;
 
         // Bobbing animation
-        if (this.minecraft.settings.viewBobbing) {
+        if (this.rayancraft.settings.viewBobbing) {
             this.bobbingAnimation(player, stack, partialTicks);
         }
 
@@ -742,7 +768,7 @@ export default class WorldRenderer {
             let z = hitResult.z;
 
             // Get block type
-            let world = this.minecraft.world;
+            let world = this.rayancraft.world;
             let typeId = world.getBlockAt(x, y, z);
             let block = Block.getById(typeId);
 
@@ -798,8 +824,8 @@ export default class WorldRenderer {
     }
 
     reset() {
-        if (this.minecraft.world !== null) {
-            this.scene.remove(this.minecraft.world.group);
+        if (this.rayancraft.world !== null) {
+            this.scene.remove(this.rayancraft.world.group);
         }
         this.webRenderer.clear();
         this.overlay.clear();

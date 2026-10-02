@@ -29,8 +29,8 @@ export default class GuiContainer extends GuiScreen {
         // Rebuild items
         if (this.container.dirty) {
             this.container.dirty = false;
-            this.minecraft.itemRenderer.destroy("inventory");
-            this.minecraft.itemRenderer.scheduleDirty("hotbar");
+            this.rayancraft.itemRenderer.destroy("inventory");
+            this.rayancraft.itemRenderer.scheduleDirty("hotbar");
         }
 
         // Draw slots
@@ -40,21 +40,21 @@ export default class GuiContainer extends GuiScreen {
         });
 
         // Draw item in cursor
-        let inventoryPlayer = this.minecraft.player.inventory;
+        let inventoryPlayer = this.rayancraft.player.inventory;
         let typeId = inventoryPlayer.itemInCursor;
         if (typeId !== null && typeId !== 0) {
             let block = Block.getById(typeId);
-            this.minecraft.itemRenderer.zIndex = 10;
-            this.minecraft.itemRenderer.renderItemInGui(
+            this.rayancraft.itemRenderer.zIndex = 10;
+            this.rayancraft.itemRenderer.renderItemInGui(
                 "inventory",
                 "cursor",
                 block,
                 mouseX,
                 mouseY
             );
-            this.minecraft.itemRenderer.zIndex = 0;
+            this.rayancraft.itemRenderer.zIndex = 0;
         } else {
-            this.minecraft.itemRenderer.destroy("inventory", "cursor");
+            this.rayancraft.itemRenderer.destroy("inventory", "cursor");
         }
 
         // Draw title
@@ -68,7 +68,7 @@ export default class GuiContainer extends GuiScreen {
 
         for (const slot of this.container.slots) {
             if (this.isMouseOverSlot(slot, mouseX, mouseY)) {
-                this.container.onSlotClick(slot, this.minecraft.player);
+                this.container.onSlotClick(slot, this.rayancraft.player);
             }
         }
     }
@@ -77,7 +77,7 @@ export default class GuiContainer extends GuiScreen {
         // Swap to slot
         for (let i = 1; i <= 9; i++) {
             if (key === 'Digit' + i && this.hoverSlot !== null) {
-                this.container.swapWithHotbar(this.hoverSlot, this.minecraft.player.inventory, i - 1);
+                this.container.swapWithHotbar(this.hoverSlot, this.rayancraft.player.inventory, i - 1);
             }
         }
 
@@ -95,7 +95,7 @@ export default class GuiContainer extends GuiScreen {
         // Render item
         if (typeId !== null && typeId !== 0) {
             let block = Block.getById(typeId);
-            this.minecraft.itemRenderer.renderItemInGui(
+            this.rayancraft.itemRenderer.renderItemInGui(
                 "inventory",
                 inventory.name + ":" + slot.index,
                 block,
@@ -116,8 +116,8 @@ export default class GuiContainer extends GuiScreen {
     onClose() {
         super.onClose();
 
-        this.minecraft.player.inventory.itemInCursor = null;
-        this.minecraft.itemRenderer.destroy("inventory");
+        this.rayancraft.player.inventory.itemInCursor = null;
+        this.rayancraft.itemRenderer.destroy("inventory");
     }
 
     drawTitle(stack) {

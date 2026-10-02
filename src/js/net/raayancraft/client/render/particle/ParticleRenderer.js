@@ -4,12 +4,14 @@ import ParticleDigging from "./particle/ParticleDigging.js";
 
 export default class ParticleRenderer {
 
-    constructor(minecraft) {
-        this.minecraft = minecraft;
+    constructor(rayancraft) {
+        this.rayancraft = rayancraft;
         this.particles = [];
     }
 
     spawnParticle(particle) {
+        if (this.rayancraft.settings && this.rayancraft.settings.particlesEnabled === false) return;
+        if (this.particles.length > (this.rayancraft.settings.maxParticles || 16000)) return;
         this.particles.push(particle);
     }
 
@@ -60,7 +62,7 @@ export default class ParticleRenderer {
                     let motionZ = targetZ - z - 0.5;
 
                     this.spawnParticle(new ParticleDigging(
-                        this.minecraft,
+                        this.rayancraft,
                         world,
                         targetX,
                         targetY,

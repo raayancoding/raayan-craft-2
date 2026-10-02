@@ -2,7 +2,7 @@ import NoiseGeneratorOctaves from "./noise/NoiseGeneratorOctaves.js";
 import Chunk from "../Chunk.js";
 import Primer from "./Primer.js";
 import CaveGenerator from "./structure/CaveGenerator.js";
-import {BlockRegistry} from "../block/BlockRegistry.js";
+import { BlockRegistry } from "../block/BlockRegistry.js";
 import TreeGenerator from "./structure/TreeGenerator.js";
 import BigTreeGenerator from "./structure/BigTreeGenerator.js";
 import Generator from "./Generator.js";
@@ -48,6 +48,56 @@ export default class WorldGenerator extends Generator {
         this.naturalize(chunkX, chunkZ, primer);
 
         this.caveGenerator.generateInChunk(chunkX, chunkZ, primer);
+        this.generateOres(chunkX, chunkZ, primer);
+    }
+
+    generateOres(chunkX, chunkZ, primer) {
+        const veins = [
+            { id: () => BlockRegistry.COAL_ORE.getId(), count: 10, minY: 5, maxY: 60, size: 6 },
+            { id: () => BlockRegistry.IRON_ORE.getId(), count: 8, minY: 5, maxY: 40, size: 5 },
+            { id: () => BlockRegistry.GOLD_ORE.getId(), count: 3, minY: 5, maxY: 25, size: 4 },
+            { id: () => BlockRegistry.DIAMOND_ORE.getId(), count: 2, minY: 2, maxY: 15, size: 4 },
+            { id: () => BlockRegistry.REDSTONE_ORE.getId(), count: 3, minY: 2, maxY: 15, size: 4 },
+            { id: () => BlockRegistry.LAPIS_ORE.getId(), count: 2, minY: 5, maxY: 25, size: 4 },
+            { id: () => BlockRegistry.COPPER_ORE.getId(), count: 6, minY: 20, maxY: 70, size: 5 },
+            { id: () => BlockRegistry.AMETHYST.getId(), count: 2, minY: 5, maxY: 30, size: 3 },
+            { id: () => BlockRegistry.DEEPSLATE.getId(), count: 6, minY: 2, maxY: 16, size: 6 },
+            { id: () => BlockRegistry.GRAVEL.getId(), count: 4, minY: 5, maxY: 60, size: 5 },
+        ];
+        // use chunk-local random for determinism
+        for (const v of veins) {
+            let oreId = 0;
+            try { oreId = v.id(); } catch (e) { continue; }
+            if (!oreId) continue;
+            for (let i = 0; i < v.count; i++) {
+                const vx = this.random.nextInt(16);
+                const vy = v.minY + this.random.nextInt(Math.max(1, v.maxY - v.minY));
+                const vz = this.random.nextInt(16);
+                for (let s = 0; s < v.size; s++) {
+                    const ox = vx + this.random.nextInt(3) - 1;
+                    const oy = vy + this.random.nextInt(3) - 1;
+                    const oz = vz + this.random.nextInt(3) - 1;
+                    if (ox < 0 || ox > 15 || oz < 0 || oz > 15 || oy < 1 || oy > 120) continue;
+                    if (primer.get(ox, oy, oz) === BlockRegistry.STONE.getId()) {
+                        primer.set(ox, oy, oz, oreId);
+                    }
+                }
+            }
+        }
+    }
+
+    getBiomeAt(x, z) {
+        const t = this.world.getTemperature(x, z);
+        const h = this.world.getHumidity(x, z);
+        if (t < 0.3) return "snow";
+        if (t > 1.3 && h < 0.3) return "desert";
+        if (t > 0.95 && h > 0.85) return "jungle";
+        if (t > 0.8 && h > 0.7) return "swamp";
+        // Latest-version cherry grove: lush + mild
+        if (h > 0.82 && t > 0.45 && t < 0.85) return "cherry";
+        if (h > 0.6) return "forest";
+        if (h < 0.25 && t > 0.7) return "desert";
+        return "plains";
     }
 
     populateChunk(chunkX, chunkZ) {
@@ -57,11 +107,22 @@ export default class WorldGenerator extends Generator {
         // Access noise data for population
         let absoluteX = chunkX * 16;
         let absoluteY = chunkZ * 16;
-        let amount = Math.floor((this.populationNoiseGenerator.perlin(absoluteX * 0.5, absoluteY * 0.5) / 8 + this.random.nextDouble() * 4 + 4) / 3);
+        const cx = absoluteX + 8, cz = absoluteY + 8;
+        const biome = this.getBiomeAt(cx, cz);
+        let density = 1.0;
+        if (biome === "forest") density = 2.4;
+        else if (biome === "jungle") density = 3.2;
+        else if (biome === "desert") density = 0.0;
+        else if (biome === "snow") density = 0.35;
+        else if (biome === "swamp") density = 0.6;
+        else if (biome === "cherry") density = 1.8;
+        else if (biome === "plains") density = 0.4;
+
+        let amount = Math.floor((this.populationNoiseGenerator.perlin(absoluteX * 0.5, absoluteY * 0.5) / 8 + this.random.nextDouble() * 4 + 4) / 3 * density);
         if (amount < 0) {
             amount = 0;
         }
-        if (this.random.nextInt(10) === 0) {
+        if (this.random.nextInt(10) === 0 && density > 0) {
             amount++;
         }
 
@@ -78,7 +139,67 @@ export default class WorldGenerator extends Generator {
 
             // Generate tree at position
             treeGenerator.generateAtBlock(totalX, totalY, totalZ);
+
+            // Cherry grove (latest): repaint oak trees pink
+            if (biome === "cherry") {
+                try {
+                    const R = BlockRegistry;
+                    const logId = R.LOG.getId(), leafId = R.LEAVE.getId();
+                    const cLog = R.CHERRY_LOG.getId(), cLeaf = R.CHERRY_LEAVES.getId();
+                    for (let dy = -1; dy < 9; dy++) for (let ox = -3; ox <= 3; ox++) for (let oz = -3; oz <= 3; oz++) {
+                        const b = this.world.getBlockAt(totalX + ox, totalY + dy, totalZ + oz);
+                        if (b === leafId) this.world.setBlockAt(totalX + ox, totalY + dy, totalZ + oz, cLeaf);
+                        else if (b === logId && dy >= 0) this.world.setBlockAt(totalX + ox, totalY + dy, totalZ + oz, cLog);
+                    }
+                } catch (e) { }
+            }
         }
+
+        // Flora / pure details
+        try {
+            const R = BlockRegistry;
+            const putSurface = (x, z, id) => {
+                const y = this.world.getHeightAt(x, z);
+                if (y <= 1 || y > 120) return;
+                const cur = this.world.getBlockAt(x, y, z);
+                const below = this.world.getBlockAt(x, y - 1, z);
+                const grassId = R.GRASS ? R.GRASS.getId() : 2;
+                const sandId = R.SAND ? R.SAND.getId() : 12;
+                if (cur !== 0) return;
+                if (id === (R.CACTUS && R.CACTUS.getId())) {
+                    if (below !== sandId) return;
+                } else if (below !== grassId && below !== sandId && below !== (R.DIRT && R.DIRT.getId())) {
+                    return;
+                }
+                this.world.setBlockAt(x, y, z, id);
+            };
+            if (biome === "desert") {
+                for (let i = 0; i < 3; i++) {
+                    if (this.random.nextInt(3) === 0 && R.CACTUS)
+                        putSurface(absoluteX + this.random.nextInt(16), absoluteY + this.random.nextInt(16), R.CACTUS.getId());
+                }
+            } else {
+                const flowerN = biome === "plains" ? 4 : 2;
+                for (let i = 0; i < flowerN; i++) {
+                    const r = this.random.nextInt(10);
+                    if (r < 4 && R.YELLOW_FLOWER) putSurface(absoluteX + this.random.nextInt(16), absoluteY + this.random.nextInt(16), R.YELLOW_FLOWER.getId());
+                    else if (r < 8 && R.RED_FLOWER) putSurface(absoluteX + this.random.nextInt(16), absoluteY + this.random.nextInt(16), R.RED_FLOWER.getId());
+                }
+                if (this.random.nextInt(100) < 2 && R.PUMPKIN)
+                    putSurface(absoluteX + this.random.nextInt(16), absoluteY + this.random.nextInt(16), R.PUMPKIN.getId());
+                if (this.random.nextInt(200) < 1 && R.MELON)
+                    putSurface(absoluteX + this.random.nextInt(16), absoluteY + this.random.nextInt(16), R.MELON.getId());
+            }
+            // Rare lava pool (pure danger)
+            if (this.random.nextInt(300) === 0 && R.LAVA) {
+                const lx = absoluteX + 8, lz = absoluteY + 8;
+                const ly = this.world.getHeightAt(lx, lz);
+                if (ly > this.seaLevel) {
+                    this.world.setBlockAt(lx, ly - 1, lz, R.LAVA.getId());
+                    this.world.setBlockAt(lx + 1, ly - 1, lz, R.LAVA.getId());
+                }
+            }
+        } catch (e) { /* flora optional */ }
     }
 
 
@@ -196,9 +317,23 @@ export default class WorldGenerator extends Generator {
 
                 let prevStonePatchNoise = -1;
 
+                // Biome for this column (pure rayancraft)
+                const wx = chunkX * 16 + x, wz = chunkZ * 16 + z;
+                const biome = this.getBiomeAt ? this.getBiomeAt(wx, wz) : "plains";
+                const R = BlockRegistry;
                 // Default layer type ids
                 let topLayerTypeId = BlockRegistry.GRASS.getId();
                 let innerLayerTypeId = BlockRegistry.DIRT.getId();
+                if (biome === "desert") {
+                    topLayerTypeId = R.SAND.getId();
+                    innerLayerTypeId = R.SANDSTONE ? R.SANDSTONE.getId() : R.SAND.getId();
+                } else if (biome === "snow") {
+                    topLayerTypeId = (R.SNOW_BLOCK ? R.SNOW_BLOCK.getId() : R.GRASS.getId());
+                    innerLayerTypeId = R.DIRT.getId();
+                } else if (biome === "swamp" || biome === "jungle") {
+                    topLayerTypeId = R.GRASS.getId();
+                    innerLayerTypeId = R.DIRT.getId();
+                }
 
                 // For the entire height of the chunk
                 for (let y = 127; y >= 0; y--) {
@@ -229,9 +364,12 @@ export default class WorldGenerator extends Generator {
                             topLayerTypeId = 0;
                             innerLayerTypeId = BlockRegistry.STONE.getId();
                         } else if (y >= this.seaLevel - 4 && y <= this.seaLevel + 1) {
-                            // Fallback is grass and dirt
-                            topLayerTypeId = BlockRegistry.GRASS.getId();
-                            innerLayerTypeId = BlockRegistry.DIRT.getId();
+                            // Biome fallback
+                            if (biome !== "desert" && biome !== "snow") {
+                                topLayerTypeId = BlockRegistry.GRASS.getId();
+                                innerLayerTypeId = BlockRegistry.DIRT.getId();
+                            }
+                            // Desert stays sandy, snow stays snowy (already set)
 
                             // Add gravel patches
                             if (gravelPatchNoise) {
@@ -239,8 +377,8 @@ export default class WorldGenerator extends Generator {
                                 innerLayerTypeId = BlockRegistry.GRAVEL.getId();
                             }
 
-                            // Add sand patches
-                            if (sandPatchNoise) {
+                            // Add sand patches (not in snow)
+                            if (sandPatchNoise && biome !== "snow") {
                                 topLayerTypeId = BlockRegistry.SAND.getId();
                                 innerLayerTypeId = BlockRegistry.SAND.getId();
                             }

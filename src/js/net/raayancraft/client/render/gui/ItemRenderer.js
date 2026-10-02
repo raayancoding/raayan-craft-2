@@ -2,8 +2,8 @@ import * as THREE from "../../../../../../../libraries/three.module.js";
 
 export default class ItemRenderer {
 
-    constructor(minecraft, window) {
-        this.minecraft = minecraft;
+    constructor(rayancraft, window) {
+        this.rayancraft = rayancraft;
         this.window = window;
 
         this.items = [];
@@ -67,7 +67,7 @@ export default class ItemRenderer {
 
             // Render item
             let group = new THREE.Group();
-            this.minecraft.worldRenderer.blockRenderer.renderGuiBlock(group, block, x, y, 10, brightness);
+            this.rayancraft.worldRenderer.blockRenderer.renderGuiBlock(group, block, x, y, 10, brightness);
             group.position.z = this.zIndex;
             group.updateMatrix();
             this.scene.add(group);

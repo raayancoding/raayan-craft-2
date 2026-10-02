@@ -14,7 +14,7 @@ export default class GuiControls extends GuiScreen {
     init() {
         super.init();
 
-        let settings = this.minecraft.settings;
+        let settings = this.rayancraft.settings;
 
         let y = this.height / 2 - 50;
         this.buttonList.push(new GuiSliderButton("Mouse Sensitivity", settings.sensitivity, 50, 150, this.width / 2 - 100, y, 200, 20, value => {
@@ -44,7 +44,7 @@ export default class GuiControls extends GuiScreen {
         }));
 
         this.buttonList.push(new GuiButton("Done", this.width / 2 - 100, y + 130, 200, 20, () => {
-            this.minecraft.displayScreen(this.previousScreen);
+            this.rayancraft.displayScreen(this.previousScreen);
         }));
     }
 
@@ -60,7 +60,7 @@ export default class GuiControls extends GuiScreen {
 
     onClose() {
         // Save settings
-        this.minecraft.settings.save();
+        this.rayancraft.settings.save();
     }
 
 }

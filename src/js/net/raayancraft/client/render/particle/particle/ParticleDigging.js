@@ -2,8 +2,8 @@ import Particle from "../Particle.js";
 
 export default class ParticleDigging extends Particle {
 
-    constructor(minecraft, world, x, y, z, motionX, motionY, motionZ, block) {
-        super(minecraft, world, x, y, z, motionX, motionY, motionZ);
+    constructor(rayancraft, world, x, y, z, motionX, motionY, motionZ, block) {
+        super(rayancraft, world, x, y, z, motionX, motionY, motionZ);
 
         // Get color multiplier
         let color = block.getParticleColor(world, x, y, z);

@@ -3,15 +3,15 @@ import Block from "../world/block/Block.js";
 import MathHelper from "../../util/MathHelper.js";
 import Keyboard from "../../util/Keyboard.js";
 import Vector3 from "../../util/Vector3.js";
-import {BlockRegistry} from "../world/block/BlockRegistry.js";
+import { BlockRegistry } from "../world/block/BlockRegistry.js";
 import InventoryPlayer from "../inventory/inventory/InventoryPlayer.js";
 
 export default class PlayerEntity extends EntityLiving {
 
     static name = "PlayerEntity";
 
-    constructor(minecraft, world, id) {
-        super(minecraft, world, id);
+    constructor(rayancraft, world, id) {
+        super(rayancraft, world, id);
 
         this.inventory = new InventoryPlayer();
         this.username = "Player";
@@ -47,15 +47,40 @@ export default class PlayerEntity extends EntityLiving {
 
         this.width = 0.6;
         this.height = 1.8;
+
+        // Pure survival state (default creative for backward compat, switch via /gamemode)
+        this.gameMode = 1;
+        this.experience = 0;
+        this.experienceLevel = 0;
+        this.foodTick = 0;
+        this.airTick = 0;
+    }
+
+    isPlayer() { return true; }
+
+    onDeath(cause) {
+        super.onDeath(cause);
+        if (this === this.rayancraft.player && this.rayancraft.isSingleplayer()) {
+            import("../gui/screens/GuiGameOver.js").then(m => {
+                this.rayancraft.displayScreen(new m.default(cause));
+            }).catch(() => { });
+        }
     }
 
     respawn() {
         let spawn = this.world.getSpawn();
         this.setPosition(spawn.x, spawn.y, spawn.z);
+        this.health = this.maxHealth;
+        this.hunger = 20;
+        this.saturation = 5;
+        this.air = 300;
+        this.isDead = false;
+        this.motionX = this.motionY = this.motionZ = 0;
+        this.fallDistance = 0;
     }
 
     turn(motionX, motionY) {
-        let sensitivity = this.minecraft.settings.sensitivity / 500;
+        let sensitivity = this.rayancraft.settings.sensitivity / 500;
         this.rotationYaw = this.rotationYaw + motionX * sensitivity;
         this.rotationPitch = this.rotationPitch - motionY * sensitivity;
 
@@ -86,7 +111,7 @@ export default class PlayerEntity extends EntityLiving {
         let prevMoveForward = this.moveForward;
         let prevJumping = this.jumping;
 
-        if (this === this.minecraft.player) {
+        if (this === this.rayancraft.player) {
             this.updateKeyboardInput();
         }
 
@@ -142,6 +167,63 @@ export default class PlayerEntity extends EntityLiving {
         }
         this.cameraYaw += (speedXZ - this.cameraYaw) * 0.4;
         this.cameraPitch += (speedY - this.cameraPitch) * 0.8;
+
+        this.updateSurvival();
+    }
+
+    updateSurvival() {
+        if (this.gameMode === 1 || this.isDead) return; // creative: no survival tick
+        if (this.gameMode === 0 && this.flying) this.flying = false;
+        if (this.hurtTime > 0) this.hurtTime--;
+        // Fall damage tracking
+        if (!this.onGround && !this.flying && !this.isInWater()) {
+            if (this.motionY < 0) this.fallDistance -= this.motionY;
+        } else {
+            if (this.fallDistance > 3.2 && !this.flying) {
+                this.damage(Math.floor(this.fallDistance - 3.0), "fall");
+            }
+            this.fallDistance = 0;
+        }
+        // Drowning
+        if (this.isHeadInWater()) {
+            this.air--;
+            if (this.air <= -20) {
+                this.air = 0;
+                this.damage(2, "drown");
+            }
+        } else {
+            this.air = Math.min(300, this.air + 10);
+        }
+        // Lava damage
+        try {
+            const lavaId = BlockRegistry.LAVA ? BlockRegistry.LAVA.getId() : -1;
+            const feet = this.world.getBlockAt(Math.floor(this.x), Math.floor(this.y + 0.2), Math.floor(this.z));
+            if (feet === lavaId) this.damage(4, "lava");
+        } catch (e) { }
+        // Hunger drain from movement
+        if ((Math.abs(this.motionX) + Math.abs(this.motionZ) > 0.1 || this.jumping) && this.onGround) {
+            this.foodTick++;
+            if (this.foodTick > 120) {
+                this.foodTick = 0;
+                if (this.saturation > 0) this.saturation = Math.max(0, this.saturation - 0.5);
+                else this.hunger = Math.max(0, this.hunger - 0.5);
+            }
+        }
+        // Regen / starve
+        if (this.hunger >= 18 && this.health < this.maxHealth && this.hunger > 0) {
+            this.foodTick++;
+            if (this.foodTick > 80) {
+                this.foodTick = 0;
+                this.heal(1);
+                this.hunger = Math.max(0, this.hunger - 0.5);
+            }
+        } else if (this.hunger <= 0) {
+            this.foodTick++;
+            if (this.foodTick > 60) {
+                this.foodTick = 0;
+                this.damage(1, "starve");
+            }
+        }
     }
 
     isInWater() {
@@ -149,7 +231,7 @@ export default class PlayerEntity extends EntityLiving {
     }
 
     isHeadInWater() {
-        let cameraPosition = this.world.minecraft.worldRenderer.camera.position;
+        let cameraPosition = this.world.rayancraft.worldRenderer.camera.position;
         return this.world.getBlockAt(
             Math.floor(cameraPosition.x),
             Math.floor(cameraPosition.y + 0.12),
@@ -212,7 +294,7 @@ export default class PlayerEntity extends EntityLiving {
         let prevX = this.x;
         let prevZ = this.z;
 
-        if (this === this.world.minecraft.player) {
+        if (this === this.world.rayancraft.player) {
             let prevSlipperiness = this.getBlockSlipperiness() * 0.91;
 
             let value = 0.16277136 / (prevSlipperiness * prevSlipperiness * prevSlipperiness);
@@ -263,7 +345,7 @@ export default class PlayerEntity extends EntityLiving {
 
                     // Play sound
                     if (!block.isLiquid()) {
-                        this.minecraft.soundManager.playSound(sound.getStepSound(), this.x, this.y, this.z, 0.15, sound.getPitch());
+                        this.rayancraft.soundManager.playSound(sound.getStepSound(), this.x, this.y, this.z, 0.15, sound.getPitch());
                     }
                 }
             }
@@ -310,7 +392,7 @@ export default class PlayerEntity extends EntityLiving {
         let jumping = false;
         let sneaking = false;
 
-        if (this.minecraft.hasInGameFocus()) {
+        if (this.rayancraft.hasInGameFocus()) {
             if (Keyboard.isKeyDown("KeyR")) {
                 // this.respawn();
             }
@@ -329,14 +411,14 @@ export default class PlayerEntity extends EntityLiving {
             if (Keyboard.isKeyDown("Space")) {
                 jumping = true;
             }
-            if (Keyboard.isKeyDown(this.minecraft.settings.keySprinting)) {
+            if (Keyboard.isKeyDown(this.rayancraft.settings.keySprinting)) {
                 if (this.moveForward > 0 && !this.isSneaking() && !this.sprinting && this.motionX !== 0 && this.motionZ !== 0) {
                     this.sprinting = true;
 
                     this.updateFOVModifier();
                 }
             }
-            if (Keyboard.isKeyDown(this.minecraft.settings.keyCrouching)) {
+            if (Keyboard.isKeyDown(this.rayancraft.settings.keyCrouching)) {
                 sneaking = true;
             }
 

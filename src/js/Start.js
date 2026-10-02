@@ -14,6 +14,7 @@ class Start {
                     let image = new Image();
                     image.src = "src/resources/" + texturePath;
                     image.onload = () => resolve();
+                    image.onerror = () => reject(new Error("Missing texture: src/resources/" + texturePath));
                     resources[texturePath] = image;
 
                     index++;
@@ -25,6 +26,16 @@ class Start {
     }
 
     launch(canvasWrapperId) {
+        // Visible boot errors instead of a silent dark screen
+        window.addEventListener('error', (e) => {
+            Start.showBootError(e.message || e.error);
+        });
+        window.addEventListener('unhandledrejection', (e) => {
+            Start.showBootError(e.reason && (e.reason.stack || e.reason.message) || e.reason);
+        });
+        if (window.location.protocol === 'file:') {
+            Start.showBootError('Open via a local server (double-click start-server.bat), not file:// — ES modules are blocked on file://');
+        }
         this.loadTextures([
             "misc/grasscolor.png",
             "gui/font.png",
@@ -46,7 +57,21 @@ class Start {
         ]).then((resources) => {
             // Launch actual game on canvas
             window.app = new Minecraft(canvasWrapperId, resources);
+        }).catch((err) => {
+            Start.showBootError(err && (err.stack || err.message) || err);
         });
+    }
+
+    static showBootError(msg) {
+        console.error(msg);
+        let el = document.getElementById("boot-error");
+        if (!el) {
+            el = document.createElement("div");
+            el.id = "boot-error";
+            el.style.cssText = "position:fixed;left:8px;bottom:8px;max-width:90vw;z-index:9999;background:#7a1010;color:#fff;font:12px monospace;padding:10px;border:2px solid #fff;white-space:pre-wrap;";
+            document.body.appendChild(el);
+        }
+        el.textContent = "Boot error: " + msg;
     }
 }
 

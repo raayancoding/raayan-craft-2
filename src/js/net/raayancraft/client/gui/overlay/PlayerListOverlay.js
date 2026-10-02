@@ -3,11 +3,11 @@ import FontRenderer from "../../render/gui/FontRenderer.js";
 
 export default class PlayerListOverlay extends Gui {
 
-    constructor(minecraft, ingameOverlay) {
+    constructor(rayancraft, ingameOverlay) {
         super();
 
-        this.minecraft = minecraft;
-        this.window = minecraft.window;
+        this.rayancraft = rayancraft;
+        this.window = rayancraft.window;
         this.ingameOverlay = ingameOverlay;
         this.dirty = true;
 
@@ -27,7 +27,7 @@ export default class PlayerListOverlay extends Gui {
     reinitialize(stack, width) {
         this.dirty = false;
 
-        let playerInfoMap = this.minecraft.playerController.getNetworkHandler().getPlayerInfoMap();
+        let playerInfoMap = this.rayancraft.playerController.getNetworkHandler().getPlayerInfoMap();
         let maxPlayerNameWidth = 0;
         let maxScoreValueWidth = 0; // TODO
 
@@ -71,7 +71,7 @@ export default class PlayerListOverlay extends Gui {
         // Calculate header
         let headerLines = null;
         if (this.header !== null) {
-            headerLines = this.minecraft.fontRenderer.listFormattedStringToWidth(this.header, width - 50);
+            headerLines = this.rayancraft.fontRenderer.listFormattedStringToWidth(this.header, width - 50);
 
             for (let line of headerLines) {
                 backgroundWidth = Math.max(backgroundWidth, this.getStringWidth(stack, line));
@@ -81,7 +81,7 @@ export default class PlayerListOverlay extends Gui {
         // Calculate footer
         let footerLines = null;
         if (this.footer !== null) {
-            footerLines = this.minecraft.fontRenderer.listFormattedStringToWidth(this.footer, width - 50);
+            footerLines = this.rayancraft.fontRenderer.listFormattedStringToWidth(this.footer, width - 50);
 
             for (let line of footerLines) {
                 backgroundWidth = Math.max(backgroundWidth, this.getStringWidth(stack, line));

@@ -4,8 +4,8 @@ import Random from "../../util/Random.js";
 
 export default class Entity {
 
-    constructor(minecraft, world, id) {
-        this.minecraft = minecraft;
+    constructor(rayancraft, world, id) {
+        this.rayancraft = rayancraft;
         this.world = world;
         this.id = id;
 
@@ -55,7 +55,7 @@ export default class Entity {
     }
 
     initRenderer() {
-        this.renderer = this.minecraft.worldRenderer.entityRenderManager.createEntityRendererByEntity(this);
+        this.renderer = this.rayancraft.worldRenderer.entityRenderManager.createEntityRendererByEntity(this);
         if (this.renderer === null) {
             throw new Error("No entity renderer for entity " + this.constructor.name + " found!");
         }
@@ -258,7 +258,7 @@ export default class Entity {
 
     setFlag(flag, value) {
         if (typeof this.metaData[0] === "undefined") {
-            this.metaData[0] = {id: 0, type: 0, value: 0};
+            this.metaData[0] = { id: 0, type: 0, value: 0 };
         }
 
         if (value) {

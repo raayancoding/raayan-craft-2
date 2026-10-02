@@ -13,7 +13,7 @@ export default class NetworkPlayHandler extends PacketHandler {
     constructor(networkManager, profile) {
         super();
 
-        this.minecraft = networkManager.minecraft;
+        this.rayancraft = networkManager.rayancraft;
         this.networkManager = networkManager;
         this.profile = profile;
 
@@ -25,14 +25,14 @@ export default class NetworkPlayHandler extends PacketHandler {
     }
 
     handleJoinGame(packet) {
-        this.minecraft.playerController = new PlayerControllerMultiplayer(this.minecraft, this, packet.entityId);
-        let world = new WorldClient(this.minecraft);
-        this.minecraft.loadWorld(world);
+        this.rayancraft.playerController = new PlayerControllerMultiplayer(this.rayancraft, this, packet.entityId);
+        let world = new WorldClient(this.rayancraft);
+        this.rayancraft.loadWorld(world);
     }
 
     handleServerChat(packet) {
         if (packet.getType() !== 2) {
-            this.minecraft.ingameOverlay.chatOverlay.addMessage(packet.getMessage());
+            this.rayancraft.ingameOverlay.chatOverlay.addMessage(packet.getMessage());
         }
     }
 
@@ -68,16 +68,16 @@ export default class NetworkPlayHandler extends PacketHandler {
             }
         }
 
-        this.minecraft.ingameOverlay.playerListOverlay.setDirty();
+        this.rayancraft.ingameOverlay.playerListOverlay.setDirty();
     }
 
     handleServerPlayerListData(packet) {
-        this.minecraft.ingameOverlay.playerListOverlay.setHeader(packet.getHeader());
-        this.minecraft.ingameOverlay.playerListOverlay.setFooter(packet.getFooter());
+        this.rayancraft.ingameOverlay.playerListOverlay.setHeader(packet.getHeader());
+        this.rayancraft.ingameOverlay.playerListOverlay.setFooter(packet.getFooter());
     }
 
     handleServerPlayerPositionRotation(packet) {
-        let player = this.minecraft.player;
+        let player = this.rayancraft.player;
 
         let x = packet.getX();
         let y = packet.getY();
@@ -116,8 +116,8 @@ export default class NetworkPlayHandler extends PacketHandler {
     }
 
     handleServerSpawnPlayer(packet) {
-        let world = this.minecraft.world;
-        let entity = new PlayerEntity(this.minecraft, world, packet.getEntityId());
+        let world = this.rayancraft.world;
+        let entity = new PlayerEntity(this.rayancraft, world, packet.getEntityId());
 
         entity.serverPositionX = packet.getX();
         entity.serverPositionY = packet.getY();
@@ -137,7 +137,7 @@ export default class NetworkPlayHandler extends PacketHandler {
     }
 
     handleEntityMovement(packet) {
-        let entity = this.minecraft.world.getEntityById(packet.getEntityId());
+        let entity = this.rayancraft.world.getEntityById(packet.getEntityId());
         if (entity !== null) {
             entity.serverPositionX += packet.getX();
             entity.serverPositionY += packet.getY();
@@ -157,7 +157,7 @@ export default class NetworkPlayHandler extends PacketHandler {
     }
 
     handleEntityTeleport(packet) {
-        let entity = this.minecraft.world.getEntityById(packet.getEntityId());
+        let entity = this.rayancraft.world.getEntityById(packet.getEntityId());
         if (entity !== null) {
             entity.serverPositionX = packet.getX();
             entity.serverPositionY = packet.getY();
@@ -181,21 +181,21 @@ export default class NetworkPlayHandler extends PacketHandler {
     }
 
     handleEntityMetadata(packet) {
-        let entity = this.minecraft.world.getEntityById(packet.getEntityId());
+        let entity = this.rayancraft.world.getEntityById(packet.getEntityId());
         if (entity !== null) {
             entity.updateMetaData(packet.getMetaData());
         }
     }
 
     handleEntityHeadLook(packet) {
-        let entity = this.minecraft.world.getEntityById(packet.getEntityId());
+        let entity = this.rayancraft.world.getEntityById(packet.getEntityId());
         if (entity !== null) {
             entity.setRotationYawHead(packet.getHeadYaw() * 360 / 256);
         }
     }
 
     handleAnimation(packet) {
-        let entity = this.minecraft.world.getEntityById(packet.getEntityId());
+        let entity = this.rayancraft.world.getEntityById(packet.getEntityId());
         if (entity !== null) {
             switch (packet.getAnimation()) {
                 case ServerAnimationPacket.SWING_ARM:
@@ -207,7 +207,7 @@ export default class NetworkPlayHandler extends PacketHandler {
 
     handleDestroyEntities(packet) {
         for (let entityId of packet.getEntityIds()) {
-            this.minecraft.world.removeEntityById(entityId);
+            this.rayancraft.world.removeEntityById(entityId);
         }
     }
 
@@ -218,7 +218,7 @@ export default class NetworkPlayHandler extends PacketHandler {
     }
 
     handleChunkData(packet) {
-        let provider = this.minecraft.world.getChunkProvider();
+        let provider = this.rayancraft.world.getChunkProvider();
 
         if (packet.isFullChunk()) {
             if (packet.getMask() === 0) {
@@ -229,7 +229,7 @@ export default class NetworkPlayHandler extends PacketHandler {
             provider.loadChunk(packet.getX(), packet.getZ());
         }
 
-        let chunk = this.minecraft.world.getChunkAt(packet.getX(), packet.getZ());
+        let chunk = this.rayancraft.world.getChunkAt(packet.getX(), packet.getZ());
         chunk.fillChunk(packet.getData(), packet.getMask(), packet.isFullChunk());
     }
 
@@ -245,17 +245,17 @@ export default class NetworkPlayHandler extends PacketHandler {
         let blockState = packet.getBlockState();
         let typeId = blockState >> 4;
 
-        this.minecraft.world.setBlockAt(position.getX(), position.getY(), position.getZ(), typeId);
+        this.rayancraft.world.setBlockAt(position.getX(), position.getY(), position.getZ(), typeId);
     }
 
     handleDisconnect(packet) {
-        this.minecraft.loadWorld(null);
-        this.minecraft.displayScreen(new GuiDisconnected(packet.getReason()));
+        this.rayancraft.loadWorld(null);
+        this.rayancraft.displayScreen(new GuiDisconnected(packet.getReason()));
     }
 
     onDisconnect() {
-        this.minecraft.loadWorld(null);
-        this.minecraft.displayScreen(new GuiDisconnected("Disconnected from server"));
+        this.rayancraft.loadWorld(null);
+        this.rayancraft.displayScreen(new GuiDisconnected("Disconnected from server"));
     }
 
     getNetworkManager() {

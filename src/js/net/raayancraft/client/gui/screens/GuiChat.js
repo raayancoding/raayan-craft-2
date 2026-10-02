@@ -3,10 +3,10 @@ import GuiTextField from "../widgets/GuiTextField.js";
 
 export default class GuiChat extends GuiScreen {
 
-    constructor(minecraft) {
+    constructor(rayancraft) {
         super();
 
-        this.minecraft = minecraft;
+        this.rayancraft = rayancraft;
 
         this.inputField = new GuiTextField(0, 0, 0, 0);
         this.inputField.renderBackground = false;
@@ -28,7 +28,7 @@ export default class GuiChat extends GuiScreen {
 
     onClose() {
         super.onClose();
-        this.minecraft.ingameOverlay.chatOverlay.setDirty();
+        this.rayancraft.ingameOverlay.chatOverlay.setDirty();
     }
 
     drawScreen(stack, mouseX, mouseY, partialTicks) {
@@ -45,17 +45,17 @@ export default class GuiChat extends GuiScreen {
             }
 
             // Close screen
-            this.minecraft.displayScreen(null);
+            this.rayancraft.displayScreen(null);
 
             // Add message to sent history
-            this.minecraft.ingameOverlay.chatOverlay.addMessageToSentHistory(message);
-            this.minecraft.playerController.sendChatMessage(message);
+            this.rayancraft.ingameOverlay.chatOverlay.addMessageToSentHistory(message);
+            this.rayancraft.playerController.sendChatMessage(message);
             return;
         }
 
         if (key === "ArrowUp" || key === "ArrowDown") {
             let up = key === "ArrowUp";
-            let history = this.minecraft.ingameOverlay.chatOverlay.sentHistory;
+            let history = this.rayancraft.ingameOverlay.chatOverlay.sentHistory;
 
             if (up) {
                 if (this.historyIndex + 1 < history.length) {

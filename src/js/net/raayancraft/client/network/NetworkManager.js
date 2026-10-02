@@ -1,7 +1,7 @@
 import ByteBuf from "./util/ByteBuf.js";
 import PacketRegistry from "./PacketRegistry.js";
 import ProtocolState from "./ProtocolState.js";
-import {require} from "../../../../Start.js";
+import { require } from "../../../../Start.js";
 import MissingPackets from "../../util/MissingPackets.js";
 
 export default class NetworkManager {
@@ -9,8 +9,8 @@ export default class NetworkManager {
     static DEBUG = false;
     static MAX_COMPRESSION = 2097152;
 
-    constructor(minecraft) {
-        this.minecraft = minecraft;
+    constructor(rayancraft) {
+        this.rayancraft = rayancraft;
         this.socket = null;
         this.connected = false;
         this.networkHandler = null;

@@ -4,8 +4,8 @@ import Tessellator from "../Tessellator.js";
 
 export default class Particle extends Entity {
 
-    constructor(minecraft, world, x, y, z, motionX, motionY, motionZ) {
-        super(minecraft, world);
+    constructor(rayancraft, world, x, y, z, motionX, motionY, motionZ) {
+        super(rayancraft, world);
 
         this.setPosition(x, y, z);
 
@@ -82,7 +82,7 @@ export default class Particle extends Entity {
         this.group.rotation.order = 'ZYX';
 
         let tessellator = new Tessellator();
-        tessellator.bindTexture(this.minecraft.worldRenderer.textureTerrain);
+        tessellator.bindTexture(this.rayancraft.worldRenderer.textureTerrain);
 
         let minU = ((this.textureIndex % 16) + this.randomX / 4) / 16.0;
         let maxU = minU + (16 / 256 / 4);
@@ -109,14 +109,14 @@ export default class Particle extends Entity {
         let mesh = tessellator.draw(this.group);
         mesh.geometry.center();
 
-        this.minecraft.worldRenderer.scene.add(this.group);
+        this.rayancraft.worldRenderer.scene.add(this.group);
     }
 
     kill() {
         super.kill();
 
         if (this.group !== null) {
-            this.minecraft.worldRenderer.scene.remove(this.group);
+            this.rayancraft.worldRenderer.scene.remove(this.group);
         }
     }
 

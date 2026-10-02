@@ -4,7 +4,7 @@ import NetworkManager from "../../network/NetworkManager.js";
 import HandshakePacket from "../../network/packet/handshake/client/HandshakePacket.js";
 import ProtocolState from "../../network/ProtocolState.js";
 import NetworkLoginHandler from "../../network/handler/NetworkLoginHandler.js";
-import Minecraft from "../../Minecraft.js";
+import rayancraft from "../../Minecraft.js";
 import LoginStartPacket from "../../network/packet/login/client/LoginStartPacket.js";
 
 export default class GuiConnecting extends GuiScreen {
@@ -28,13 +28,13 @@ export default class GuiConnecting extends GuiScreen {
     }
 
     connect(address, port) {
-        this.networkManager = new NetworkManager(this.minecraft);
+        this.networkManager = new NetworkManager(this.rayancraft);
         this.networkManager.setNetworkHandler(new NetworkLoginHandler(this.networkManager));
-        this.networkManager.connect(address, port, Minecraft.PROXY);
+        this.networkManager.connect(address, port, rayancraft.PROXY);
 
-        // Send Minecraft protocol handshake
-        this.networkManager.sendPacket(new HandshakePacket(Minecraft.PROTOCOL_VERSION, ProtocolState.LOGIN));
-        this.networkManager.sendPacket(new LoginStartPacket(this.minecraft.getSession().getProfile().getUsername()));
+        // Send rayancraft protocol handshake
+        this.networkManager.sendPacket(new HandshakePacket(rayancraft.PROTOCOL_VERSION, ProtocolState.LOGIN));
+        this.networkManager.sendPacket(new LoginStartPacket(this.rayancraft.getSession().getProfile().getUsername()));
     }
 
     init() {
@@ -42,7 +42,7 @@ export default class GuiConnecting extends GuiScreen {
 
         let y = this.height / 2 - 50;
         this.buttonList.push(new GuiButton("Cancel", this.width / 2 - 100, y + 130, 200, 20, () => {
-            this.minecraft.displayScreen(this.previousScreen);
+            this.rayancraft.displayScreen(this.previousScreen);
         }));
 
         // Connect on first initialization

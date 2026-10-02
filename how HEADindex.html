@@ -1,0 +1,315 @@
+[1mdiff --git a/index.html b/index.html[m
+[1mindex 66db838..d499e16 100644[m
+[1m--- a/index.html[m
+[1m+++ b/index.html[m
+[36m@@ -1,30 +1,38 @@[m
+[32m+[m[32m<!DOCTYPE html>[m
+ <html lang="en">[m
+[32m+[m
+ <head>[m
+[31m-    <title>raayancraft</title>[m
+[31m-    <meta name="viewport"[m
+[31m-          content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height"/>[m
+[31m-    <link rel="shortcut icon" href="src/resources/favicon.ico" type="image/x-icon">[m
+[31m-    <link rel="stylesheet" href="style.css"/>[m
+[32m+[m[32m    <meta charset="UTF-8" />[m
+[32m+[m[32m    <meta name="viewport" content="width=device-width, initial-scale=1.0" />[m
+[32m+[m[32m    <title>Raayan Craft Poster</title>[m
+[32m+[m[32m    <link rel="stylesheet" href="style.css" />[m
+ </head>[m
+ [m
+ <body>[m
+[32m+[m[32m    <div class="poster-shell">[m
+[32m+[m[32m        <div class="ai-pill">Made with AI</div>[m
+[32m+[m[32m        <div id="mosaic" class="block-mosaic" aria-label="Minecraft style block collage"></div>[m
+[32m+[m[32m    </div>[m
+ [m
+[31m-<div id="background" class="fullscreen"></div>[m
+[32m+[m[32m    <script>[m
+[32m+[m[32m        const palette = [[m
+[32m+[m[32m            'grass', 'grass', 'grass', 'dirt', 'stone', 'stone', 'sand', 'sand', 'wood', 'wood',[m
+[32m+[m[32m            'leaves', 'coal', 'iron', 'gold', 'redstone', 'lapis', 'diamond', 'emerald', 'glass',[m
+[32m+[m[32m            'terracotta', 'purple', 'red', 'orange', 'cyan', 'beige', 'obsidian', 'crimson', 'warped',[m
+[32m+[m[32m            'snow', 'basalt', 'planks', 'stone-dark', 'gold-deep', 'brown', 'green-deep', 'blue-deep'[m
+[32m+[m[32m        ];[m
+ [m
+[31m-<div id="content">[m
+[31m-    <div id="canvas-container" class="fullscreen"></div>[m
+[31m-</div>[m
+[32m+[m[32m        const mosaic = document.getElementById('mosaic');[m
+[32m+[m[32m        const cols = Math.max(30, Math.floor(window.innerWidth / 30));[m
+[32m+[m[32m        const rows = Math.max(26, Math.floor(window.innerHeight / 30));[m
+ [m
+[32m+[m[32m        for (let i = 0; i < cols * rows; i++) {[m
+[32m+[m[32m            const tile = document.createElement('span');[m
+[32m+[m[32m            const tone = palette[Math.floor(Math.random() * palette.length)];[m
+[32m+[m[32m            tile.className = `tile ${tone}`;[m
+[32m+[m[32m            mosaic.appendChild(tile);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    </script>[m
+ </body>[m
+ [m
+[31m-<!-- Libraries -->[m
+[31m-<script type="module" src="libraries/pako.es5.min.js"></script>[m
+[31m-<script type="module" src="libraries/aes.js"></script>[m
+[31m-<script type="module" src="libraries/asn1.js"></script>[m
+[31m-<script type="module" src="libraries/bigint-mod-arith.js"></script>[m
+[31m-<script type="module" src="libraries/sha1.min.js"></script>[m
+[31m-[m
+[31m-<!-- raayancraft -->[m
+[31m-<script type="module" src="src/js/Start.js"></script>[m
+[31m-[m
+ </html>[m
+\ No newline at end of file[m
+[1mdiff --git a/style.css b/style.css[m
+[1mindex 9550ab6..960865f 100644[m
+[1m--- a/style.css[m
+[1m+++ b/style.css[m
+[36m@@ -1,36 +1,218 @@[m
+[32m+[m[32m* {[m
+[32m+[m[32m    box-sizing: border-box;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mhtml,[m
+ body {[m
+     margin: 0;[m
+[32m+[m[32m    min-height: 100%;[m
+[32m+[m[32m    background: #000;[m
+[32m+[m[32m    font-family: "Segoe UI", sans-serif;[m
+ }[m
+ [m
+[31m-canvas {[m
+[31m-    position: absolute;[m
+[31m-    image-rendering: -moz-crisp-edges;[m
+[31m-    /* Firefox */[m
+[31m-    image-rendering: -webkit-crisp-edges;[m
+[31m-    /* Webkit (Safari) */[m
+[31m-    image-rendering: pixelated;[m
+[31m-    /* Chrome */[m
+[31m-}[m
+[31m-[m
+[31m-#background {[m
+[31m-    background-color: #1a1a2e;[m
+[31m-    background-repeat: no-repeat;[m
+[31m-    background-size: contain;[m
+[31m-    background-position: center;[m
+[31m-    image-rendering: -moz-crisp-edges;[m
+[31m-    /* Firefox */[m
+[31m-    image-rendering: -webkit-crisp-edges;[m
+[31m-    /* Webkit (Safari) */[m
+[31m-    image-rendering: pixelated;[m
+[31m-    /* Chrome */[m
+[31m-}[m
+[31m-[m
+[31m-.fullscreen {[m
+[32m+[m[32mbody {[m
+[32m+[m[32m    min-height: 100vh;[m
+[32m+[m[32m    display: grid;[m
+[32m+[m[32m    place-items: center;[m
+[32m+[m[32m    overflow: hidden;[m
+[32m+[m[32m    background: #020508;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.poster-shell {[m
+[32m+[m[32m    position: relative;[m
+[32m+[m[32m    width: 100vw;[m
+[32m+[m[32m    height: 100vh;[m
+[32m+[m[32m    background: #000;[m
+[32m+[m[32m    overflow: hidden;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.block-mosaic {[m
+     position: absolute;[m
+[31m-    float: left;[m
+[31m-    display: block;[m
+[32m+[m[32m    inset: 0;[m
+[32m+[m[32m    display: grid;[m
+[32m+[m[32m    grid-template-columns: repeat(var(--cols, 40), minmax(0, 1fr));[m
+[32m+[m[32m    gap: 0;[m
+[32m+[m[32m    padding: 0;[m
+[32m+[m[32m    background: #000;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.tile {[m
+[32m+[m[32m    position: relative;[m
+     width: 100%;[m
+[31m-    height: 100%;[m
+[31m-    white-space: nowrap;[m
+[32m+[m[32m    aspect-ratio: 1;[m
+[32m+[m[32m    min-width: 0;[m
+[32m+[m[32m    display: block;[m
+[32m+[m[32m    transform: rotate(-45deg) skew(15deg, 15deg);[m
+[32m+[m[32m    margin: -4px 0 0 -4px;[m
+[32m+[m[32m    border-radius: 2px;[m
+     overflow: hidden;[m
+[32m+[m[32m    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.18);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.tile::before,[m
+[32m+[m[32m.tile::after {[m
+[32m+[m[32m    content: "";[m
+[32m+[m[32m    position: absolute;[m
+[32m+[m[32m    inset: 0;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.tile::before {[m
+[32m+[m[32m    background: rgba(255, 255, 255, 0.08);[m
+[32m+[m[32m    transform: translate(-9px, -9px);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.tile::after {[m
+[32m+[m[32m    background: rgba(0, 0, 0, 0.18);[m
+[32m+[m[32m    transform: translate(9px, 9px);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.grass {[m
+[32m+[m[32m    background: linear-gradient(135deg, #6bbf4d, #3b7d34 55%, #143c1d);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.dirt {[m
+[32m+[m[32m    background: linear-gradient(135deg, #9c6738, #6b4026 60%, #2a1a13);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.stone {[m
+[32m+[m[32m    background: linear-gradient(135deg, #b3b7bc, #7c7f88 58%, #3f464d);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.stone-dark {[m
+[32m+[m[32m    background: linear-gradient(135deg, #65717b, #394950 58%, #18252c);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.sand {[m
+[32m+[m[32m    background: linear-gradient(135deg, #d7c383, #b99552 58%, #7a5929);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.wood {[m
+[32m+[m[32m    background: linear-gradient(135deg, #c98b54, #915827 58%, #4f2e20);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.planks {[m
+[32m+[m[32m    background: linear-gradient(135deg, #bb8354, #8a5533 58%, #513221);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.leaves {[m
+[32m+[m[32m    background: linear-gradient(135deg, #67d36c, #2f8a3a 58%, #16452b);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.coal {[m
+[32m+[m[32m    background: linear-gradient(135deg, #737070, #312f2d 58%, #0a0d0f);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.iron {[m
+[32m+[m[32m    background: linear-gradient(135deg, #d9e1e8, #7d8e9c 58%, #42505f);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.gold {[m
+[32m+[m[32m    background: linear-gradient(135deg, #f8e48a, #d4a938 58%, #7d5917);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.gold-deep {[m
+[32m+[m[32m    background: linear-gradient(135deg, #d0a94f, #87611d 58%, #47300d);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.redstone {[m
+[32m+[m[32m    background: linear-gradient(135deg, #e4574d, #b61a1a 58%, #680d0d);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.lapis {[m
+[32m+[m[32m    background: linear-gradient(135deg, #63afd9, #1d5ea5 58%, #102d59);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.diamond {[m
+[32m+[m[32m    background: linear-gradient(135deg, #cbf3ff, #71cee5 58%, #3d8ca7);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.emerald {[m
+[32m+[m[32m    background: linear-gradient(135deg, #9beea8, #2fb36b 58%, #0d5d35);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.glass {[m
+[32m+[m[32m    background: linear-gradient(135deg, rgba(200, 245, 255, 0.92), rgba(124, 182, 228, 0.8) 58%, rgba(31, 63, 79, 0.85));[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.terracotta {[m
+[32m+[m[32m    background: linear-gradient(135deg, #d58c5d, #b05a35 58%, #633722);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.purple {[m
+[32m+[m[32m    background: linear-gradient(135deg, #c18fe7, #7442a8 58%, #2d1b4b);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.red {[m
+[32m+[m[32m    background: linear-gradient(135deg, #ff6f61, #c7262f 58%, #5d1013);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.orange {[m
+[32m+[m[32m    background: linear-gradient(135deg, #ffbd62, #e0821d 58%, #7d3a0d);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.cyan {[m
+[32m+[m[32m    background: linear-gradient(135deg, #79eae5, #1fa5ad 58%, #123d43);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.beige {[m
+[32m+[m[32m    background: linear-gradient(135deg, #f1dca3, #d2a762 58%, #7b4d21);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.obsidian {[m
+[32m+[m[32m    background: linear-gradient(135deg, #5d5d74, #2d2f3f 58%, #11141d);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.crimson {[m
+[32m+[m[32m    background: linear-gradient(135deg, #d14949, #74161b 58%, #2d090d);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.warped {[m
+[32m+[m[32m    background: linear-gradient(135deg, #68d7cf, #258679 58%, #123d3f);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.snow {[m
+[32m+[m[32m    background: linear-gradient(135deg, #e9f5ff, #bfd6e9 58%, #7e90a7);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.basalt {[m
+[32m+[m[32m    background: linear-gradient(135deg, #8d909c, #4d5561 58%, #1c2026);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.brown {[m
+[32m+[m[32m    background: linear-gradient(135deg, #af6a42, #7a442b 58%, #311c13);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.green-deep {[m
+[32m+[m[32m    background: linear-gradient(135deg, #7bc160, #3d8d45 58%, #143720);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.blue-deep {[m
+[32m+[m[32m    background: linear-gradient(135deg, #6faee4, #1e5aa2 58%, #12294a);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.ai-pill {[m
+[32m+[m[32m    position: absolute;[m
+[32m+[m[32m    right: 28px;[m
+[32m+[m[32m    top: 22px;[m
+[32m+[m[32m    z-index: 20;[m
+[32m+[m[32m    display: inline-flex;[m
+[32m+[m[32m    align-items: center;[m
+[32m+[m[32m    justify-content: center;[m
+[32m+[m[32m    padding: 18px 28px;[m
+[32m+[m[32m    border-radius: 999px;[m
+[32m+[m[32m    background: rgba(245, 245, 243, 0.96);[m
+[32m+[m[32m    color: #141414;[m
+[32m+[m[32m    font-size: clamp(1.2rem, 2vw, 2.2rem);[m
+[32m+[m[32m    font-weight: 700;[m
+[32m+[m[32m    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.28);[m
+[32m+[m[32m    border: 2px solid rgba(20, 20, 20, 0.1);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m@media (max-width: 700px) {[m
+[32m+[m[32m    .ai-pill {[m
+[32m+[m[32m        right: 16px;[m
+[32m+[m[32m        top: 16px;[m
+[32m+[m[32m        padding: 12px 18px;[m
+[32m+[m[32m        font-size: 1rem;[m
+[32m+[m[32m    }[m
+ }[m
+\ No newline at end of file[m

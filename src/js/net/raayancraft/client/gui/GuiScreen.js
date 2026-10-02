@@ -9,8 +9,8 @@ export default class GuiScreen extends Gui {
         this.previousScreen = null;
     }
 
-    setup(minecraft, width, height) {
-        this.minecraft = minecraft;
+    setup(rayancraft, width, height) {
+        this.rayancraft = rayancraft;
         this.width = width;
         this.height = height;
         this.textureBackground = this.getTexture("gui/background.png");
@@ -29,7 +29,7 @@ export default class GuiScreen extends Gui {
     drawScreen(stack, mouseX, mouseY, partialTicks) {
         for (let i in this.buttonList) {
             let button = this.buttonList[i];
-            button.minecraft = this.minecraft;
+            button.rayancraft = this.rayancraft;
             button.render(stack, mouseX, mouseY, partialTicks);
         }
     }
@@ -44,7 +44,7 @@ export default class GuiScreen extends Gui {
 
     keyTyped(key, character) {
         if (key === "Escape") {
-            this.minecraft.displayScreen(this.previousScreen);
+            this.rayancraft.displayScreen(this.previousScreen);
             return true;
         }
 
@@ -94,7 +94,7 @@ export default class GuiScreen extends Gui {
     }
 
     drawDefaultBackground(stack) {
-        if (this.minecraft.isInGame()) {
+        if (this.rayancraft.isInGame()) {
             // Render transparent background
             this.drawRect(stack, 0, 0, this.width, this.height, 'black', 0.6);
         } else {

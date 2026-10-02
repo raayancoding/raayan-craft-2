@@ -18,14 +18,14 @@ export default class GuiDirectConnect extends GuiScreen {
 
         this.fieldAddress = new GuiTextField(this.width / 2 - 100, y + 30, 200, 20)
         this.fieldAddress.maxLength = 30;
-        this.fieldAddress.text = this.minecraft.settings.serverAddress;
+        this.fieldAddress.text = this.rayancraft.settings.serverAddress;
         this.buttonList.push(this.fieldAddress);
 
         this.buttonList.push(new GuiButton("Connect", this.width / 2 - 155, y + 110, 150, 20, () => {
-            this.minecraft.displayScreen(new GuiConnecting(this, this.fieldAddress.text));
+            this.rayancraft.displayScreen(new GuiConnecting(this, this.fieldAddress.text));
         }));
         this.buttonList.push(new GuiButton("Cancel", this.width / 2 + 5, y + 110, 150, 20, () => {
-            this.minecraft.displayScreen(this.previousScreen);
+            this.rayancraft.displayScreen(this.previousScreen);
         }));
     }
 
@@ -45,8 +45,8 @@ export default class GuiDirectConnect extends GuiScreen {
     }
 
     onClose() {
-        this.minecraft.settings.serverAddress = this.fieldAddress.text;
-        this.minecraft.settings.save();
+        this.rayancraft.settings.serverAddress = this.fieldAddress.text;
+        this.rayancraft.settings.save();
     }
 
 }

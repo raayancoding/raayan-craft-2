@@ -3,8 +3,8 @@ import MathHelper from "../../util/MathHelper.js";
 
 export default class EntityLiving extends Entity {
 
-    constructor(minecraft, world, id) {
-        super(minecraft, world, id);
+    constructor(rayancraft, world, id) {
+        super(rayancraft, world, id);
 
         this.jumpTicks = 0;
 
@@ -29,7 +29,43 @@ export default class EntityLiving extends Entity {
         this.prevLimbSwingStrength = 0;
 
         this.health = 20.0;
+        this.maxHealth = 20.0;
+        this.hunger = 20.0;
+        this.saturation = 5.0;
+        this.air = 300;
+        this.fallDistance = 0;
+        this.hurtTime = 0;
+        this.deathTime = 0;
+        this.attackTime = 0;
     }
+
+    damage(amount, cause = "generic") {
+        if (this.isDead || this.health <= 0) return false;
+        // Creative / spectator immunity for player
+        if (this.isPlayer && this.isPlayer() && this.gameMode === 1) return false;
+        this.health -= amount;
+        this.hurtTime = 10;
+        if (this.health <= 0) {
+            this.health = 0;
+            this.onDeath(cause);
+        }
+        return true;
+    }
+
+    heal(amount) {
+        this.health = Math.min(this.maxHealth, this.health + amount);
+    }
+
+    isAlive() {
+        return !this.isDead && this.health > 0;
+    }
+
+    onDeath(cause) {
+        this.isDead = true;
+        this.deathTime = 0;
+    }
+
+    isPlayer() { return false; }
 
     onUpdate() {
         super.onUpdate();

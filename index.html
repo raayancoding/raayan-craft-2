@@ -1,30 +1,46 @@
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>raayancraft</title>
     <meta name="viewport"
-          content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height"/>
+        content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
     <link rel="shortcut icon" href="src/resources/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
+    <div id="background" class="fullscreen"></div>
+    <div id="content">
+        <div id="canvas-container" class="fullscreen"></div>
+    </div>
 
-<div id="background" class="fullscreen"></div>
-
-<div id="content">
-    <div id="canvas-container" class="fullscreen"></div>
-</div>
-
+    <script type="module" src="libraries/pako.es5.min.js"></script>
+    <script type="module" src="libraries/aes.js"></script>
+    <script type="module" src="libraries/asn1.js"></script>
+    <script type="module" src="libraries/bigint-mod-arith.js"></script>
+    <script type="module" src="libraries/sha1.min.js"></script>
+    <script type="module" src="src/js/Start.js"></script>
+    <script>
+        // Plain-script boot check: runs even when ES modules are blocked (file://)
+        (function () {
+            if (window.location.protocol === 'file:') {
+                var d = document.createElement('div');
+                d.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;z-index:10000;background:#7a1010;color:#fff;font:14px sans-serif;padding:12px;border:2px solid #fff;';
+                d.textContent = 'raayancraft must be opened via a local server: double-click start-server.bat, then open http://localhost:8000 — opening index.html directly (file://) blocks the game modules.';
+                document.body.appendChild(d);
+            }
+            // If modules fail to boot within 8s, hint at F12 console
+            setTimeout(function () {
+                if (!window.app) {
+                    var d = document.createElement('div');
+                    d.style.cssText = 'position:fixed;left:8px;bottom:8px;max-width:90vw;z-index:9999;background:#7a1010;color:#fff;font:12px monospace;padding:10px;border:2px solid #fff;';
+                    d.textContent = 'Still loading? The game failed to boot. Press F12 > Console for the error, and make sure you used start-server.bat (http://localhost:8000).';
+                    document.body.appendChild(d);
+                }
+            }, 8000);
+        })();
+    </script>
 </body>
-
-<!-- Libraries -->
-<script type="module" src="libraries/pako.es5.min.js"></script>
-<script type="module" src="libraries/aes.js"></script>
-<script type="module" src="libraries/asn1.js"></script>
-<script type="module" src="libraries/bigint-mod-arith.js"></script>
-<script type="module" src="libraries/sha1.min.js"></script>
-
-<!-- raayancraft -->
-<script type="module" src="src/js/Start.js"></script>
 
 </html>

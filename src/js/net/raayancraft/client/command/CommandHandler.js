@@ -1,16 +1,28 @@
 import HelpCommand from "./command/HelpCommand.js";
 import TimeCommand from "./command/TimeCommand.js";
 import TeleportCommand from "./command/TeleportCommand.js";
+import GamemodeCommand from "./command/GamemodeCommand.js";
+import GiveCommand from "./command/GiveCommand.js";
+import WeatherCommand from "./command/WeatherCommand.js";
+import KillCommand from "./command/KillCommand.js";
+import SeedCommand from "./command/SeedCommand.js";
+import SummonCommand from "./command/SummonCommand.js";
 
 export default class CommandHandler {
 
-    constructor(minecraft) {
-        this.minecraft = minecraft;
+    constructor(rayancraft) {
+        this.rayancraft = rayancraft;
 
         this.commands = [];
         this.commands.push(new HelpCommand());
         this.commands.push(new TimeCommand());
         this.commands.push(new TeleportCommand());
+        this.commands.push(new GamemodeCommand());
+        this.commands.push(new GiveCommand());
+        this.commands.push(new WeatherCommand());
+        this.commands.push(new KillCommand());
+        this.commands.push(new SeedCommand());
+        this.commands.push(new SummonCommand());
     }
 
     handleMessage(message) {
@@ -23,12 +35,12 @@ export default class CommandHandler {
         for (let i = 0; i < this.commands.length; i++) {
             let commandExecutor = this.commands[i];
             if (commandExecutor.command === command) {
-                if (!this.commands[i].execute(this.minecraft, args)) {
-                    this.minecraft.addMessageToChat("/" + commandExecutor.command + " " + commandExecutor.usage);
+                if (!this.commands[i].execute(this.rayancraft, args)) {
+                    this.rayancraft.addMessageToChat("/" + commandExecutor.command + " " + commandExecutor.usage);
                 }
                 return;
             }
         }
-        this.minecraft.addMessageToChat("Unknown command! Type \"/help\" for help.");
+        this.rayancraft.addMessageToChat("Unknown command! Type \"/help\" for help.");
     }
 }

@@ -3,10 +3,10 @@ import GuiDisconnected from "../../gui/screens/GuiDisconnected.js";
 
 export default class NetworkStatusHandler extends PacketHandler {
 
-    constructor(minecraft, callback) {
+    constructor(rayancraft, callback) {
         super();
 
-        this.minecraft = minecraft;
+        this.rayancraft = rayancraft;
         this.callback = callback;
     }
 
@@ -15,7 +15,7 @@ export default class NetworkStatusHandler extends PacketHandler {
     }
 
     onDisconnect() {
-        this.minecraft.displayScreen(new GuiDisconnected("NetworkManager lost"));
+        this.rayancraft.displayScreen(new GuiDisconnected("NetworkManager lost"));
     }
 
 }

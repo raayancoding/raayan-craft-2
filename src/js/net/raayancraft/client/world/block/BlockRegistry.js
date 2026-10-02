@@ -14,6 +14,11 @@ import BlockGlass from "./type/BlockGlass.js";
 import SoundGlass from "./sound/SoundGlass.js";
 import BlockGravel from "./type/BlockGravel.js";
 import BlockCobblestone from "./type/BlockCobblestone.js";
+import BlockOre from "./type/BlockOre.js";
+import BlockSimple from "./type/BlockSimple.js";
+import BlockFlower from "./type/BlockFlower.js";
+import BlockLava from "./type/BlockLava.js";
+import BlockCherryLeaves from "./type/BlockCherryLeaves.js";
 
 export class BlockRegistry {
 
@@ -41,5 +46,48 @@ export class BlockRegistry {
         BlockRegistry.WATER = new BlockWater(9, 7);
         BlockRegistry.SAND = new BlockSand(12, 8)
         BlockRegistry.TORCH = new BlockTorch(50, 9)
+
+        // ---- Pure rayancraft expansion (vanilla IDs) ----
+        // Ores (procedural textures slots 15-20)
+        BlockRegistry.COAL_ORE = new BlockOre(16, 15);
+        BlockRegistry.IRON_ORE = new BlockOre(15, 16);
+        BlockRegistry.GOLD_ORE = new BlockOre(14, 17);
+        BlockRegistry.DIAMOND_ORE = new BlockOre(56, 18);
+        BlockRegistry.REDSTONE_ORE = new BlockOre(73, 19);
+        BlockRegistry.LAPIS_ORE = new BlockOre(21, 20);
+        // Building
+        BlockRegistry.SANDSTONE = new BlockSimple(24, 21, { sound: Block.sounds.stone });
+        BlockRegistry.BRICK = new BlockSimple(45, 22, { sound: Block.sounds.stone });
+        BlockRegistry.OBSIDIAN = new BlockSimple(49, 23, { sound: Block.sounds.stone });
+        BlockRegistry.WOOL = new BlockSimple(35, 24, { sound: Block.sounds.cloth });
+        BlockRegistry.SNOW_BLOCK = new BlockSimple(80, 25, { sound: Block.sounds.cloth });
+        BlockRegistry.ICE = new BlockSimple(79, 26, { sound: Block.sounds.glass, translucent: true });
+        BlockRegistry.CACTUS = new BlockSimple(81, 27, { sound: Block.sounds.cloth });
+        BlockRegistry.PUMPKIN = new BlockSimple(86, 28, { top: 29, bottom: 29, side: 28, sound: Block.sounds.wood });
+        BlockRegistry.CRAFTING_TABLE = new BlockSimple(58, 31, { top: 30, bottom: 10, side: 31, sound: Block.sounds.wood });
+        BlockRegistry.FURNACE = new BlockSimple(61, 33, { top: 33, bottom: 33, side: 32, sound: Block.sounds.stone });
+        BlockRegistry.CHEST = new BlockSimple(54, 34, { sound: Block.sounds.wood });
+        BlockRegistry.BOOKSHELF = new BlockSimple(47, 39, { top: 10, bottom: 10, side: 39, sound: Block.sounds.wood });
+        BlockRegistry.TNT = new BlockSimple(46, 40, { top: 9, bottom: 10, side: 40, sound: Block.sounds.grass });
+        BlockRegistry.MELON = new BlockSimple(103, 41, { sound: Block.sounds.grass });
+        BlockRegistry.SMOOTH_STONE = new BlockSimple(43, 42, { sound: Block.sounds.stone });
+        BlockRegistry.MOSSY_COBBLE = new BlockSimple(48, 43, { sound: Block.sounds.stone });
+        // Bedrock-exclusive feel: netherrack + glowstone
+        BlockRegistry.NETHERRACK = new BlockSimple(87, 44, { sound: Block.sounds.stone });
+        BlockRegistry.GLOWSTONE = new BlockSimple(89, 45, { sound: Block.sounds.glass, light: 15 });
+        BlockRegistry.LAVA = new BlockLava(11, 38);
+        // Flora
+        BlockRegistry.RED_FLOWER = new BlockFlower(38, 35);
+        BlockRegistry.YELLOW_FLOWER = new BlockFlower(37, 36);
+        BlockRegistry.SAPLING = new BlockFlower(6, 37);
+        // Latest-version set (modern IDs): copper, deepslate, amethyst, cherry
+        BlockRegistry.COPPER_ORE = new BlockOre(201, 46);
+        BlockRegistry.COPPER_BLOCK = new BlockSimple(202, 47, { sound: Block.sounds.stone });
+        BlockRegistry.DEEPSLATE = new BlockSimple(203, 48, { sound: Block.sounds.stone });
+        BlockRegistry.AMETHYST = new BlockSimple(204, 49, { sound: Block.sounds.glass, light: 8 });
+        BlockRegistry.CHERRY_LOG = new BlockLog(205, 50);
+        BlockRegistry.CHERRY_LEAVES = new BlockCherryLeaves(206, 51);
+        // Solid sounds fix
+        BlockRegistry.SANDSTONE.sound = Block.sounds.sand;
     }
 }

@@ -4,15 +4,15 @@ import ClientChatPacket from "../packet/play/client/ClientChatPacket.js";
 
 export default class PlayerControllerMultiplayer extends PlayerController {
 
-    constructor(minecraft, networkHandler, entityId) {
-        super(minecraft);
+    constructor(rayancraft, networkHandler, entityId) {
+        super(rayancraft);
 
         this.entityId = entityId;
         this.networkHandler = networkHandler;
     }
 
     createPlayer(world) {
-        return new PlayerEntityMultiplayer(this.minecraft, world, this.networkHandler, this.entityId);
+        return new PlayerEntityMultiplayer(this.rayancraft, world, this.networkHandler, this.entityId);
     }
 
     sendChatMessage(message) {

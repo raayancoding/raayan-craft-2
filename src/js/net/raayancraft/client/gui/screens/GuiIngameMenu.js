@@ -13,15 +13,15 @@ export default class GuiIngameMenu extends GuiScreen {
 
         let y = this.height / 2 - 30;
         this.buttonList.push(new GuiButton("Back to game", this.width / 2 - 100, y, 200, 20, () => {
-            this.minecraft.displayScreen(null);
+            this.rayancraft.displayScreen(null);
         }));
 
         this.buttonList.push(new GuiButton("Options...", this.width / 2 - 100, y + 24, 200, 20, () => {
-            this.minecraft.displayScreen(new GuiOptions(this));
+            this.rayancraft.displayScreen(new GuiOptions(this));
         }));
 
         this.buttonList.push(new GuiButton("Save and Quit to Title", this.width / 2 - 100, y + 70, 200, 20, () => {
-            this.minecraft.loadWorld(null);
+            this.rayancraft.loadWorld(null);
         }));
     }
 

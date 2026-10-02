@@ -7,10 +7,10 @@ export default class HelpCommand extends Command {
         super("help", "", "Displays a list of commands")
     }
 
-    execute(minecraft, args) {
-        minecraft.addMessageToChat(FontRenderer.COLOR_PREFIX + "2--- Showing help page ---");
-        minecraft.commandHandler.commands.forEach(command => {
-            minecraft.addMessageToChat("/" + command.command + " " + command.usage + " - " + command.description);
+    execute(rayancraft, args) {
+        rayancraft.addMessageToChat(FontRenderer.COLOR_PREFIX + "2--- Showing help page ---");
+        rayancraft.commandHandler.commands.forEach(command => {
+            rayancraft.addMessageToChat("/" + command.command + " " + command.usage + " - " + command.description);
         });
         return true;
     }

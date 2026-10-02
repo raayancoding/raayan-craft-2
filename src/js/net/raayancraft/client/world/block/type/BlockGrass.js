@@ -23,7 +23,7 @@ export default class BlockGrass extends Block {
 
         let temperature = world.getTemperature(x, y, z);
         let humidity = world.getHumidity(x, y, z);
-        return world.minecraft.grassColorizer.getColor(temperature, humidity);
+        return world.rayancraft.grassColorizer.getColor(temperature, humidity);
     }
 
     getParticleTextureFace() {

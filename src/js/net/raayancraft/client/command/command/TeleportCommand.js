@@ -6,7 +6,7 @@ export default class TeleportCommand extends Command {
         super("tp", "<x> <y> <z>", "Teleport to a position")
     }
 
-    execute(minecraft, args) {
+    execute(rayancraft, args) {
         if (args.length !== 3) {
             return false;
         }
@@ -19,8 +19,8 @@ export default class TeleportCommand extends Command {
             return false;
         }
 
-        minecraft.player.setPosition(x, y, z);
-        minecraft.addMessageToChat("Teleported to " + x + " " + y + " " + z);
+        rayancraft.player.setPosition(x, y, z);
+        rayancraft.addMessageToChat("Teleported to " + x + " " + y + " " + z);
 
         return true;
     }

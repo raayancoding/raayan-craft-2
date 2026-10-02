@@ -8,8 +8,8 @@ import ClientSwingArmPacket from "../network/packet/play/client/ClientSwingArmPa
 
 export default class PlayerEntityMultiplayer extends PlayerEntity {
 
-    constructor(minecraft, world, networkHandler, id) {
-        super(minecraft, world, id);
+    constructor(rayancraft, world, networkHandler, id) {
+        super(rayancraft, world, id);
 
         this.networkHandler = networkHandler;
 

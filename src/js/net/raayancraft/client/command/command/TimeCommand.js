@@ -6,7 +6,7 @@ export default class TimeCommand extends Command {
         super("time", "<set|add> <value>", "Change the time of the world")
     }
 
-    execute(minecraft, args) {
+    execute(rayancraft, args) {
         if (args.length !== 2) {
             return false;
         }
@@ -21,8 +21,8 @@ export default class TimeCommand extends Command {
                 value = parseInt(value);
             }
 
-            minecraft.world.time += value;
-            minecraft.addMessageToChat("Added " + value + " to the time");
+            rayancraft.world.time += value;
+            rayancraft.addMessageToChat("Added " + value + " to the time");
         } else if (action === "set") {
             if (isNaN(value)) {
                 if (value === "day") {
@@ -36,8 +36,8 @@ export default class TimeCommand extends Command {
                 value = parseInt(value);
             }
 
-            minecraft.world.time = value;
-            minecraft.addMessageToChat("Time set to " + value);
+            rayancraft.world.time = value;
+            rayancraft.addMessageToChat("Time set to " + value);
         } else {
             return false;
         }

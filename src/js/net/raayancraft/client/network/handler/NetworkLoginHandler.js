@@ -20,7 +20,7 @@ export default class NetworkLoginHandler extends PacketHandler {
         let secretKey = CryptManager.createNewSharedKey();
 
         // Send join server request to Mojang
-        let session = this.networkManager.minecraft.getSession();
+        let session = this.networkManager.rayancraft.getSession();
         let serverId = this.authentication.createServerHash(packet.serverId, secretKey, packet.publicKey);
         this.authentication.joinServer(session.getProfile(), session.getAccessToken(), serverId);
 
@@ -33,7 +33,7 @@ export default class NetworkLoginHandler extends PacketHandler {
 
     handleLoginDisconnect(packet) {
         console.log("[Network] Disconnected from server: " + packet.message);
-        this.networkManager.minecraft.displayScreen(new GuiDisconnected(packet.message));
+        this.networkManager.rayancraft.displayScreen(new GuiDisconnected(packet.message));
     }
 
     handleLoginSuccess(packet) {
@@ -46,8 +46,8 @@ export default class NetworkLoginHandler extends PacketHandler {
     }
 
     onDisconnect() {
-        if (this.networkManager.minecraft.isInGame()) {
-            this.networkManager.minecraft.displayScreen(new GuiDisconnected("Disconnected from server"));
+        if (this.networkManager.rayancraft.isInGame()) {
+            this.networkManager.rayancraft.displayScreen(new GuiDisconnected("Disconnected from server"));
         }
     }
 

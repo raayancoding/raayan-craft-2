@@ -5,8 +5,8 @@ import MathHelper from "../../../util/MathHelper.js";
 
 export default class ChatOverlay extends Gui {
 
-    constructor(minecraft) {
-        super(minecraft);
+    constructor(rayancraft) {
+        super(rayancraft);
 
         this.chatWidth = 320;
 
@@ -16,7 +16,7 @@ export default class ChatOverlay extends Gui {
     }
 
     render(stack, mouseX, mouseY, partialTicks) {
-        let chatOpen = this.minecraft.currentScreen instanceof GuiChat;
+        let chatOpen = this.rayancraft.currentScreen instanceof GuiChat;
 
         for (let i = 0; i < this.messages.length; i++) {
             let message = this.messages[i];
@@ -31,7 +31,7 @@ export default class ChatOverlay extends Gui {
             }
 
             if (alpha > 0) {
-                let y = this.minecraft.window.height - 40 - i * 9;
+                let y = this.rayancraft.window.height - 40 - i * 9;
 
                 this.drawRect(stack, 2, y - 1, 2 + this.chatWidth, y + 8, '#000000', alpha / 2 / 255);
                 this.drawString(stack, message.message, 2, y, 0xffffff + (alpha << 24));
@@ -53,7 +53,7 @@ export default class ChatOverlay extends Gui {
     }
 
     addMessage(message) {
-        for (let line of this.minecraft.fontRenderer.listFormattedStringToWidth(message, this.chatWidth)) {
+        for (let line of this.rayancraft.fontRenderer.listFormattedStringToWidth(message, this.chatWidth)) {
             this.messages.splice(0, 0, new ChatLine(line));
         }
         this.dirty = true;

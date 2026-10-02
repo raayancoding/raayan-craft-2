@@ -11,7 +11,7 @@ export default class PlayerRenderer extends EntityRenderer {
         this.worldRenderer = worldRenderer;
 
         // Load character texture
-        this.textureCharacter = worldRenderer.minecraft.getThreeTexture('char.png');
+        this.textureCharacter = worldRenderer.rayancraft.getThreeTexture('char.png');
         this.textureCharacter.magFilter = THREE.NearestFilter;
         this.textureCharacter.minFilter = THREE.NearestFilter;
 
@@ -22,8 +22,8 @@ export default class PlayerRenderer extends EntityRenderer {
     }
 
     rebuild(entity) {
-        let isSelf = entity === this.worldRenderer.minecraft.player;
-        let firstPerson = this.worldRenderer.minecraft.settings.thirdPersonView === 0;
+        let isSelf = entity === this.worldRenderer.rayancraft.player;
+        let firstPerson = this.worldRenderer.rayancraft.settings.thirdPersonView === 0;
         let itemId = firstPerson && isSelf ? this.worldRenderer.itemToRender : entity.inventory.getItemInSelectedSlot();
         let hasItem = itemId !== 0;
 
@@ -76,7 +76,7 @@ export default class PlayerRenderer extends EntityRenderer {
         this.model.isSneaking = entity.isSneaking();
 
         // TODO find a better way
-        if (entity !== this.worldRenderer.minecraft.player) {
+        if (entity !== this.worldRenderer.rayancraft.player) {
             this.firstPersonGroup.visible = false;
         }
 
@@ -108,7 +108,7 @@ export default class PlayerRenderer extends EntityRenderer {
     fillMeta(entity, meta) {
         super.fillMeta(entity, meta);
 
-        let firstPerson = this.worldRenderer.minecraft.settings.thirdPersonView === 0;
+        let firstPerson = this.worldRenderer.rayancraft.settings.thirdPersonView === 0;
 
         meta.firstPerson = firstPerson;
         meta.itemInHand = firstPerson ? this.worldRenderer.itemToRender : entity.inventory.getItemInSelectedSlot();

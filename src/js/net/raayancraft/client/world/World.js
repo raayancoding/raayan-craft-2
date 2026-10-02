@@ -13,8 +13,8 @@ export default class World {
 
     static TOTAL_HEIGHT = ChunkSection.SIZE * 8 - 1; // ChunkSection.SIZE * 16 - 1;
 
-    constructor(minecraft) {
-        this.minecraft = minecraft;
+    constructor(rayancraft) {
+        this.rayancraft = rayancraft;
 
         this.entities = [];
 
@@ -24,13 +24,16 @@ export default class World {
         this.lightUpdateQueue = [];
         this.chunkProvider = null;
 
-        this.time = 0;
+        this.time = 6000;
         this.spawn = new Vector3(0, 0, 0);
+        this.weather = "clear";
+        this.weatherTime = 0;
+        this.difficulty = 1;
 
         // Update lights async
         let scope = this;
         setInterval(function () {
-            let i = scope.minecraft.loadingScreen === null ? 1000 : 100000;
+            let i = scope.rayancraft.loadingScreen === null ? 1000 : 100000;
             while (scope.lightUpdateQueue.length >= 10 && i > 0) {
                 i--;
                 scope.lightUpdateQueue.shift().updateBlockLightning(scope);
@@ -44,8 +47,22 @@ export default class World {
 
     onTick() {
         // Tick entities
-        for (let i = 0; i < this.entities.length; i++) {
-            this.entities[i].onUpdate();
+        for (let i = this.entities.length - 1; i >= 0; i--) {
+            const e = this.entities[i];
+            e.onUpdate();
+            // Remove dead mobs (not player)
+            if (e.isDead && e.constructor.name !== "PlayerEntity" && e.deathTime !== undefined) {
+                e.deathTime = (e.deathTime || 0) + 1;
+                if (e.deathTime > 20) {
+                    this.removeEntityById(e.id);
+                    // XP to player if nearby
+                    try {
+                        if (this.rayancraft.player && Math.abs(e.x - this.rayancraft.player.x) < 8) {
+                            this.rayancraft.player.experience += 3;
+                        }
+                    } catch (err) { }
+                }
+            }
         }
 
         // Update skylight subtracted (To make the night dark)
@@ -54,11 +71,96 @@ export default class World {
             this.skylightSubtracted = lightLevel;
 
             // Rebuild all chunks
-            this.minecraft.worldRenderer.rebuildAll();
+            this.rayancraft.worldRenderer.rebuildAll();
         }
 
-        // Update world time
+        // Update world time (pure day cycle 24000)
         this.time++;
+
+        // Weather cycle (Bedrock-like random)
+        if (this.weatherTime > 0) this.weatherTime--;
+        else {
+            if (this.weather === "clear" && Math.random() < 0.0008) {
+                this.weather = Math.random() < 0.25 ? "thunder" : "rain";
+                this.weatherTime = 6000 + Math.floor(Math.random() * 6000);
+            } else if (this.weather !== "clear" && Math.random() < 0.002) {
+                this.weather = "clear";
+                this.weatherTime = 6000 + Math.floor(Math.random() * 8000);
+            }
+        }
+
+        // Pure mob spawning (singleplayer only)
+        try {
+            if (this.rayancraft.isSingleplayer && this.rayancraft.isSingleplayer() && this.rayancraft.player && Math.random() < 0.02) {
+                const t = this.time % 24000;
+                const night = t > 12500 && t < 23500;
+                let pigs = 0, zombies = 0;
+                let myths = 0;
+                for (const e of this.entities) {
+                    if (e.constructor.name === "EntityPig") pigs++;
+                    if (e.constructor.name === "EntityZombie") zombies++;
+                    if (e.isMyth) myths++;
+                }
+                const px = Math.floor(this.rayancraft.player.x), pz = Math.floor(this.rayancraft.player.z);
+                const sx = px + Math.floor(Math.random() * 40 - 20), sz = pz + Math.floor(Math.random() * 40 - 20);
+                const sy = this.getHeightAt(sx, sz);
+                if (sy > 0) {
+                    if (!night && pigs < 6 && Math.random() < 0.4) {
+                        import("../entity/EntityPig.js").then(m => {
+                            const id = Date.now() % 100000 + Math.floor(Math.random() * 1000);
+                            const pig = new m.default(this.rayancraft, this, id);
+                            pig.setPosition(sx + 0.5, sy + 1, sz + 0.5);
+                            if (this.getBlockAt(sx, sy, sz) !== 0) this.addEntity(pig);
+                        }).catch(() => { });
+                    } else if (night && zombies < 6) {
+                        import("../entity/EntityZombie.js").then(m => {
+                            const id = Date.now() % 100000 + Math.floor(Math.random() * 1000);
+                            const z = new m.default(this.rayancraft, this, id);
+                            z.setPosition(sx + 0.5, sy + 1, sz + 0.5);
+                            this.addEntity(z);
+                        }).catch(() => { });
+                    }
+                    // Mythical creatures: VERY rare, mostly night, max 1 at a time
+                    if (myths < 1 && Math.random() < 0.03) {
+                        const roll = Math.random();
+                        let file = null, warn = "";
+                        if (night && roll < 0.25) { file = "EntityHerobrine"; warn = "§fHEROBRINE has joined the game"; }
+                        else if (night && roll < 0.45) { file = "Entity303"; warn = "§4ENTITY 303 has awakened..."; }
+                        else if (night && roll < 0.62) { file = "EntityGiantAlex"; warn = "§6You feel watched. GIANT ALEX stalks you."; }
+                        else if (night && roll < 0.79) { file = "EntitySiren"; warn = "§8A siren wails in the dark..."; }
+                        else if (roll < 0.9) { file = "EntityBloodGolem"; warn = "§cA BLOOD GOLEM rises!"; }
+                        if (file) {
+                            import("../entity/" + file + ".js").then(m => {
+                                const id = Date.now() % 100000 + Math.floor(Math.random() * 1000);
+                                const myth = new m.default(this.rayancraft, this, id);
+                                myth.isMyth = true;
+                                myth.setPosition(sx + 0.5, sy + 1, sz + 0.5);
+                                this.addEntity(myth);
+                                this.rayancraft.addMessageToChat(warn);
+                            }).catch(() => { });
+                        }
+                    }
+                }
+            }
+            // AI companions: empty multiplayer lobbies get bots so you never play alone
+            if (this.rayancraft.player && !(this.rayancraft.isSingleplayer && this.rayancraft.isSingleplayer())) {
+                let humans = 0, bots = 0;
+                for (const e of this.entities) {
+                    if (e.constructor.name === "EntityBot") bots++;
+                    else if (e.constructor.name === "PlayerEntityMultiplayer" || e === this.rayancraft.player) humans++;
+                }
+                if (humans <= 1 && bots < 2 && Math.random() < 0.01) {
+                    import("../entity/EntityBot.js").then(m => {
+                        const id = Date.now() % 100000 + Math.floor(Math.random() * 1000);
+                        const bot = new m.default(this.rayancraft, this, id);
+                        const p = this.rayancraft.player;
+                        bot.setPosition(p.x + 2, p.y + 1, p.z + 2);
+                        this.addEntity(bot);
+                        this.rayancraft.addMessageToChat("§e" + bot.username + " joined the game");
+                    }).catch(() => { });
+                }
+            }
+        } catch (e) { }
     }
 
     getChunkAt(x, z) {
@@ -451,11 +553,31 @@ export default class World {
     }
 
     getTemperature(x, y, z) {
-        return 0.75; // TODO implement biomes
+        if (typeof y !== "number") { z = y; }
+        // Pure biome temperature: continent + detail
+        const continent = Math.sin(x * 0.004) * Math.cos((z || 0) * 0.004);
+        const detail = Math.sin(x * 0.02 + 1.7) * Math.cos((z || 0) * 0.02 - 0.6);
+        return 0.75 + continent * 0.55 + detail * 0.25;
     }
 
     getHumidity(x, y, z) {
-        return 0.85; // TODO implement biomes
+        if (typeof y !== "number") { z = y; }
+        const c = Math.sin(x * 0.003 - 0.8) * Math.cos((z || 0) * 0.005 + 0.4);
+        const d = Math.sin(x * 0.017 + 0.3) * Math.cos((z || 0) * 0.019);
+        return 0.55 + c * 0.35 + d * 0.2;
+    }
+
+    getBiomeName(x, z) {
+        const t = this.getTemperature(x, z);
+        const h = this.getHumidity(x, z);
+        if (t < 0.3) return "Snowy Tundra";
+        if (t > 1.3 && h < 0.3) return "Desert";
+        if (t > 0.95 && h > 0.85) return "Jungle";
+        if (t > 0.8 && h > 0.7) return "Swamp";
+        if (h > 0.82 && t > 0.45 && t < 0.85) return "Cherry Grove";
+        if (h > 0.6) return "Forest";
+        if (h < 0.25 && t > 0.7) return "Desert";
+        return "Plains";
     }
 
     getSkyColor(x, z, partialTicks) {
@@ -596,7 +718,7 @@ export default class World {
     }
 
     loadSpawnChunks() {
-        let viewDistance = this.minecraft.settings.viewDistance;
+        let viewDistance = this.rayancraft.settings.viewDistance;
         for (let x = -viewDistance; x <= viewDistance; x++) {
             for (let z = -viewDistance; z <= viewDistance; z++) {
                 this.getChunkAt(x + this.spawn.x >> 4, z + this.spawn.z >> 4);

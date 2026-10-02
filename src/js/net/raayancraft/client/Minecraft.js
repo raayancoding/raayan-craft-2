@@ -18,13 +18,15 @@ import ParticleRenderer from "./render/particle/ParticleRenderer.js";
 import GuiChat from "./gui/screens/GuiChat.js";
 import CommandHandler from "./command/CommandHandler.js";
 import GuiContainerCreative from "./gui/screens/container/GuiContainerCreative.js";
+import GuiContainerSurvival from "./gui/screens/container/GuiContainerSurvival.js";
 import GameProfile from "../util/GameProfile.js";
 import UUID from "../util/UUID.js";
 import FocusStateType from "../util/FocusStateType.js";
 import Session from "../util/Session.js";
 import PlayerControllerMultiplayer from "./network/controller/PlayerControllerMultiplayer.js";
+import TerrainPatcher from "./render/TerrainPatcher.js";
 
-export default class Minecraft {
+export default class rayancraft {
 
     static VERSION = "2.0.0"
     static URL_GITHUB = "https://github.com/raayancraft/raayancraft";
@@ -36,7 +38,7 @@ export default class Minecraft {
     };
 
     /**
-     * Create Minecraft instance and render it on a canvas
+     * Create rayancraft instance and render it on a canvas
      */
     constructor(canvasWrapperId, resources) {
         this.resources = resources;
@@ -159,6 +161,16 @@ export default class Minecraft {
             // Create player
             this.player = this.playerController.createPlayer(this.world);
             this.player.username = this.session.getProfile().getUsername();
+            if (this.pendingGameMode !== undefined) {
+                this.player.gameMode = this.pendingGameMode;
+                this.pendingGameMode = undefined;
+            }
+            // Give starter kit in survival (pure): planks + torches + crafting table
+            if (this.player.gameMode === 0) {
+                this.player.inventory.addItem(5);
+                this.player.inventory.addItem(50);
+                this.player.inventory.addItem(58);
+            }
             this.world.addEntity(this.player);
 
             // Load spawn chunks and respawn player
@@ -361,7 +373,11 @@ export default class Minecraft {
 
         // Open inventory
         if (button === this.settings.keyOpenInventory) {
-            this.displayScreen(new GuiContainerCreative(this.player));
+            if (this.player && this.player.gameMode === 0) {
+                this.displayScreen(new GuiContainerSurvival(this.player));
+            } else {
+                this.displayScreen(new GuiContainerCreative(this.player));
+            }
         }
     }
 
@@ -371,32 +387,71 @@ export default class Minecraft {
 
             // Destroy block
             if (button === 0) {
+                // Pure combat: hit mobs first
+                try {
+                    const look = this.player.getLook(1.0);
+                    let best = null, bestD = 4.0;
+                    for (const e of this.world.entities) {
+                        if (e === this.player || e.isDead) continue;
+                        const dx = (e.x - this.player.x), dy = ((e.y + e.height / 2) - (this.player.y + 1.5)), dz = (e.z - this.player.z);
+                        const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                        if (d > 4) continue;
+                        const dot = (dx * look.x + dy * look.y + dz * look.z) / (d || 1);
+                        if (dot > 0.85 && d < bestD) { best = e; bestD = d; }
+                    }
+                    if (best) {
+                        best.damage(4, "generic");
+                        this.player.swingArm();
+                        if (best.isDead) this.addMessageToChat("§7Slain " + best.constructor.name);
+                        this.worldRenderer.flushRebuild = true;
+                        return;
+                    }
+                } catch (e) { }
                 if (hitResult != null) {
                     // Get previous block
                     let typeId = this.world.getBlockAt(hitResult.x, hitResult.y, hitResult.z);
                     let block = Block.getById(typeId);
 
-                    if (typeId !== 0) {
-                        let soundName = block.getSound().getBreakSound();
+                    if (typeId !== 0 && block) {
+                        const survival = this.player && this.player.gameMode === 0;
+                        // Bedrock + obsidian rules (pure)
+                        if (survival && (typeId === 7 || typeId === 49)) {
+                            this.addMessageToChat("§7That block is unbreakable in Survival!");
+                        } else {
+                            let soundName = block.getSound().getBreakSound();
 
-                        // Play sound
-                        this.soundManager.playSound(
-                            soundName,
-                            hitResult.x + 0.5,
-                            hitResult.y + 0.5,
-                            hitResult.z + 0.5,
-                            1.0,
-                            1.0
-                        );
+                            // Play sound
+                            this.soundManager.playSound(
+                                soundName,
+                                hitResult.x + 0.5,
+                                hitResult.y + 0.5,
+                                hitResult.z + 0.5,
+                                1.0,
+                                1.0
+                            );
 
-                        // Spawn particle
-                        this.particleRenderer.spawnBlockBreakParticle(this.world, hitResult.x, hitResult.y, hitResult.z);
+                            // Spawn particle
+                            this.particleRenderer.spawnBlockBreakParticle(this.world, hitResult.x, hitResult.y, hitResult.z);
 
-                        // Add block to inventory
-                        this.player.inventory.addItem(typeId);
+                            // Survival: small XP + hunger cost; Creative: free
+                            if (survival) {
+                                // Ores drop XP (pure)
+                                if ([14, 15, 16, 56, 73, 21, 201].includes(typeId)) {
+                                    this.player.experience += 3;
+                                    if (this.player.experience >= (this.player.experienceLevel + 1) * 10) {
+                                        this.player.experienceLevel++;
+                                        this.addMessageToChat("§aLevel up! Level " + this.player.experienceLevel);
+                                    }
+                                }
+                                this.player.hunger = Math.max(0, this.player.hunger - 0.1);
+                            }
 
-                        // Destroy block
-                        this.world.setBlockAt(hitResult.x, hitResult.y, hitResult.z, 0);
+                            // Add block to inventory
+                            this.player.inventory.addItem(typeId);
+
+                            // Destroy block
+                            this.world.setBlockAt(hitResult.x, hitResult.y, hitResult.z, 0);
+                        }
                     }
                 }
 
@@ -438,13 +493,19 @@ export default class Minecraft {
 
                         // Get previous block
                         let prevTypeId = this.world.getBlockAt(x, y, z);
+                        const canReplace = (prevTypeId === 0 || (Block.getById(prevTypeId) && !Block.getById(prevTypeId).isSolid()));
 
-                        if (typeId !== 0 && prevTypeId !== typeId) {
+                        if (typeId !== 0 && canReplace) {
                             // Place block
                             this.world.setBlockAt(x, y, z, typeId);
 
                             // Swing player arm
                             this.player.swingArm();
+
+                            // Survival consumes block (pure)
+                            if (this.player.gameMode === 0) {
+                                this.player.inventory.setItemInSelectedSlot(0);
+                            }
 
                             // Handle block abilities
                             let block = Block.getById(typeId);
@@ -528,6 +589,9 @@ export default class Minecraft {
         canvas.height = image.height;
         context.imageSmoothingEnabled = false;
         context.drawImage(image, 0, 0, image.width, image.height);
+        if (id === "terrain/terrain.png") {
+            TerrainPatcher.patch(canvas, context);
+        }
         return new THREE.CanvasTexture(canvas);
     }
 }

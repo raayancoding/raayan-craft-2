@@ -1,15 +1,14 @@
+html,
 body {
     margin: 0;
+    min-height: 100%;
 }
 
 canvas {
     position: absolute;
     image-rendering: -moz-crisp-edges;
-    /* Firefox */
     image-rendering: -webkit-crisp-edges;
-    /* Webkit (Safari) */
     image-rendering: pixelated;
-    /* Chrome */
 }
 
 #background {
@@ -18,11 +17,8 @@ canvas {
     background-size: contain;
     background-position: center;
     image-rendering: -moz-crisp-edges;
-    /* Firefox */
     image-rendering: -webkit-crisp-edges;
-    /* Webkit (Safari) */
     image-rendering: pixelated;
-    /* Chrome */
 }
 
 .fullscreen {
@@ -33,4 +29,222 @@ canvas {
     height: 100%;
     white-space: nowrap;
     overflow: hidden;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+    background: #000;
+    font-family: "Segoe UI", sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    display: block;
+    overflow: hidden;
+    background: #020508;
+}
+
+.poster-shell {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    overflow: hidden;
+}
+
+.block-mosaic {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 40), minmax(0, 1fr));
+    gap: 0;
+    padding: 0;
+    background: #000;
+}
+
+.tile {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    min-width: 0;
+    display: block;
+    transform: rotate(-45deg) skew(15deg, 15deg);
+    margin: -4px 0 0 -4px;
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.tile::before,
+.tile::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+}
+
+.tile::before {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translate(-9px, -9px);
+}
+
+.tile::after {
+    background: rgba(0, 0, 0, 0.18);
+    transform: translate(9px, 9px);
+}
+
+.grass {
+    background: linear-gradient(135deg, #6bbf4d, #3b7d34 55%, #143c1d);
+}
+
+.dirt {
+    background: linear-gradient(135deg, #9c6738, #6b4026 60%, #2a1a13);
+}
+
+.stone {
+    background: linear-gradient(135deg, #b3b7bc, #7c7f88 58%, #3f464d);
+}
+
+.stone-dark {
+    background: linear-gradient(135deg, #65717b, #394950 58%, #18252c);
+}
+
+.sand {
+    background: linear-gradient(135deg, #d7c383, #b99552 58%, #7a5929);
+}
+
+.wood {
+    background: linear-gradient(135deg, #c98b54, #915827 58%, #4f2e20);
+}
+
+.planks {
+    background: linear-gradient(135deg, #bb8354, #8a5533 58%, #513221);
+}
+
+.leaves {
+    background: linear-gradient(135deg, #67d36c, #2f8a3a 58%, #16452b);
+}
+
+.coal {
+    background: linear-gradient(135deg, #737070, #312f2d 58%, #0a0d0f);
+}
+
+.iron {
+    background: linear-gradient(135deg, #d9e1e8, #7d8e9c 58%, #42505f);
+}
+
+.gold {
+    background: linear-gradient(135deg, #f8e48a, #d4a938 58%, #7d5917);
+}
+
+.gold-deep {
+    background: linear-gradient(135deg, #d0a94f, #87611d 58%, #47300d);
+}
+
+.redstone {
+    background: linear-gradient(135deg, #e4574d, #b61a1a 58%, #680d0d);
+}
+
+.lapis {
+    background: linear-gradient(135deg, #63afd9, #1d5ea5 58%, #102d59);
+}
+
+.diamond {
+    background: linear-gradient(135deg, #cbf3ff, #71cee5 58%, #3d8ca7);
+}
+
+.emerald {
+    background: linear-gradient(135deg, #9beea8, #2fb36b 58%, #0d5d35);
+}
+
+.glass {
+    background: linear-gradient(135deg, rgba(200, 245, 255, 0.92), rgba(124, 182, 228, 0.8) 58%, rgba(31, 63, 79, 0.85));
+}
+
+.terracotta {
+    background: linear-gradient(135deg, #d58c5d, #b05a35 58%, #633722);
+}
+
+.purple {
+    background: linear-gradient(135deg, #c18fe7, #7442a8 58%, #2d1b4b);
+}
+
+.red {
+    background: linear-gradient(135deg, #ff6f61, #c7262f 58%, #5d1013);
+}
+
+.orange {
+    background: linear-gradient(135deg, #ffbd62, #e0821d 58%, #7d3a0d);
+}
+
+.cyan {
+    background: linear-gradient(135deg, #79eae5, #1fa5ad 58%, #123d43);
+}
+
+.beige {
+    background: linear-gradient(135deg, #f1dca3, #d2a762 58%, #7b4d21);
+}
+
+.obsidian {
+    background: linear-gradient(135deg, #5d5d74, #2d2f3f 58%, #11141d);
+}
+
+.crimson {
+    background: linear-gradient(135deg, #d14949, #74161b 58%, #2d090d);
+}
+
+.warped {
+    background: linear-gradient(135deg, #68d7cf, #258679 58%, #123d3f);
+}
+
+.snow {
+    background: linear-gradient(135deg, #e9f5ff, #bfd6e9 58%, #7e90a7);
+}
+
+.basalt {
+    background: linear-gradient(135deg, #8d909c, #4d5561 58%, #1c2026);
+}
+
+.brown {
+    background: linear-gradient(135deg, #af6a42, #7a442b 58%, #311c13);
+}
+
+.green-deep {
+    background: linear-gradient(135deg, #7bc160, #3d8d45 58%, #143720);
+}
+
+.blue-deep {
+    background: linear-gradient(135deg, #6faee4, #1e5aa2 58%, #12294a);
+}
+
+.ai-pill {
+    position: absolute;
+    right: 28px;
+    top: 22px;
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 28px;
+    border-radius: 999px;
+    background: rgba(245, 245, 243, 0.96);
+    color: #141414;
+    font-size: clamp(1.2rem, 2vw, 2.2rem);
+    font-weight: 700;
+    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.28);
+    border: 2px solid rgba(20, 20, 20, 0.1);
+}
+
+@media (max-width: 700px) {
+    .ai-pill {
+        right: 16px;
+        top: 16px;
+        padding: 12px 18px;
+        font-size: 1rem;
+    }
 }

@@ -1,7 +1,7 @@
 import Gui from "../Gui.js";
 import Block from "../../world/block/Block.js";
 import ChatOverlay from "./ChatOverlay.js";
-import Minecraft from "../../Minecraft.js";
+import rayancraft from "../../Minecraft.js";
 import EnumBlockFace from "../../../util/EnumBlockFace.js";
 import MathHelper from "../../../util/MathHelper.js";
 import FontRenderer from "../../render/gui/FontRenderer.js";
@@ -11,39 +11,50 @@ import Keyboard from "../../../util/Keyboard.js";
 
 export default class IngameOverlay extends Gui {
 
-    constructor(minecraft, window) {
+    constructor(rayancraft, window) {
         super();
-        this.minecraft = minecraft;
+        this.rayancraft = rayancraft;
         this.window = window;
 
-        this.chatOverlay = new ChatOverlay(minecraft);
-        this.playerListOverlay = new PlayerListOverlay(minecraft, this);
+        this.chatOverlay = new ChatOverlay(rayancraft);
+        this.playerListOverlay = new PlayerListOverlay(rayancraft, this);
 
-        this.textureCrosshair = minecraft.resources["gui/icons.png"];
-        this.textureHotbar = minecraft.resources["gui/gui.png"];
+        this.textureCrosshair = rayancraft.resources["gui/icons.png"];
+        this.textureHotbar = rayancraft.resources["gui/gui.png"];
 
         this.ticksRendered = 0;
     }
 
     render(stack, mouseX, mouseY, partialTicks) {
         // Render crosshair
-        if (this.minecraft.hasInGameFocus()) {
+        if (this.rayancraft.hasInGameFocus()) {
             this.renderCrosshair(stack, this.window.width / 2, this.window.height / 2)
         }
 
         // Render hotbar
         this.renderHotbar(stack, this.window.width / 2 - 91, this.window.height - 22);
 
+        // Pure survival HUD (hearts / hunger / air / xp / weather)
+        if (this.rayancraft.isInGame() && this.rayancraft.player) {
+            this.renderSurvivalHud(stack, this.window.width / 2 - 91, this.window.height - 22);
+            this.renderWeatherOverlay(stack);
+        }
+
+        // Bedrock-style touch hints
+        if (this.rayancraft.window.mobileDevice) {
+            this.drawString(stack, "Tap: break  Hold: place  Joystick: move", 4, this.window.height - 34, 0xFFFFFFFF);
+        }
+
         // Render chat canvas
         stack.drawImage(this.window.canvasChat, 0, 0);
 
         // Render debug canvas on stack
-        if (this.minecraft.settings.debugOverlay) {
+        if (this.rayancraft.settings.debugOverlay) {
             stack.drawImage(this.window.canvasDebug, 0, 0);
         }
 
         // Render player list
-        if (Keyboard.isKeyDown(this.minecraft.settings.keyPlayerList) && !this.minecraft.isSingleplayer()) {
+        if (Keyboard.isKeyDown(this.rayancraft.settings.keyPlayerList) && !this.rayancraft.isSingleplayer()) {
             this.playerListOverlay.renderPlayerList(stack, this.window.width);
         }
     }
@@ -52,7 +63,7 @@ export default class IngameOverlay extends Gui {
         this.chatOverlay.onTick();
 
         // Render debug overlay on tick
-        if (this.minecraft.settings.debugOverlay) {
+        if (this.rayancraft.settings.debugOverlay) {
             let stack = this.window.canvasDebug.getContext('2d');
 
             // Render debug overlay each tick if the player is moving
@@ -63,7 +74,7 @@ export default class IngameOverlay extends Gui {
                 // Render debug information
                 this.renderLeftDebugOverlay(stack);
                 this.renderRightDebugOverlay(stack);
-            } else if (this.minecraft.player.isMoving()) {
+            } else if (this.rayancraft.player.isMoving()) {
                 // Render debug information
                 this.renderLeftDebugOverlay(stack, [5, 6, 7, 8]);
             }
@@ -84,6 +95,72 @@ export default class IngameOverlay extends Gui {
         this.drawSprite(stack, this.textureCrosshair, 0, 0, 15, 15, x - size / 2, y - size / 2, size, size, 0.6);
     }
 
+    renderSurvivalHud(stack, hx, hy) {
+        const p = this.rayancraft.player;
+        if (!p) return;
+        // Hearts (above hotbar left)
+        const hp = Math.ceil((p.health || 20) / 2);
+        for (let i = 0; i < 10; i++) {
+            const x = hx + i * 8, y = hy - 10;
+            const full = i < hp;
+            const hurtFlash = p.hurtTime > 0 && (Date.now() % 300 < 150);
+            this.drawRect(stack, x, y, x + 7, y + 7, full ? (hurtFlash ? "#ff8888" : "#e02828") : "#3a0d0d");
+            this.drawRect(stack, x + 1, y + 1, x + 6, y + 3, full ? "#ff7777" : "#220808");
+        }
+        // Hunger (above hotbar right)
+        const hg = Math.ceil((p.hunger !== undefined ? p.hunger : 20) / 2);
+        for (let i = 0; i < 10; i++) {
+            const x = hx + 182 - 8 - i * 8, y = hy - 10;
+            const full = (9 - i) < hg;
+            this.drawRect(stack, x, y, x + 7, y + 7, full ? "#8a5a22" : "#2a1c0d");
+            this.drawRect(stack, x + 1, y + 4, x + 6, y + 6, full ? "#c98a3a" : "#1a1208");
+        }
+        // Air bubbles when head in water
+        try {
+            if (p.isHeadInWater && p.isHeadInWater()) {
+                const airN = Math.ceil((p.air || 0) / 30);
+                for (let i = 0; i < 10; i++) {
+                    const x = hx + i * 8, y = hy - 20;
+                    this.drawRect(stack, x, y, x + 7, y + 7, i < airN ? "#7ac8e8" : "#12303f");
+                }
+            }
+        } catch (e) { }
+        // XP level + hotbar number (pure)
+        if (p.experienceLevel > 0) {
+            this.drawCenteredString(stack, "" + p.experienceLevel, hx + 91, hy - 22, 0xFF7afc7a);
+        }
+        // Gamemode + biome line (Bedrock-style coords)
+        const gm = p.gameMode === 0 ? "Survival" : "Creative";
+        const bx = Math.floor(p.x), by = Math.floor(p.y), bz = Math.floor(p.z);
+        let biome = "";
+        try { biome = this.rayancraft.world.getBiomeName(bx, bz); } catch (e) { }
+        this.drawString(stack, gm + "  XYZ " + bx + " / " + by + " / " + bz + (biome ? "  " + biome : ""), 4, 4, 0xFFE0E0E0);
+        if (this.rayancraft.world.weather && this.rayancraft.world.weather !== "clear") {
+            this.drawString(stack, (this.rayancraft.world.weather === "rain" ? "Rain" : "Thunder"), this.window.width - 70, 4, 0xFF7ac8ff);
+        }
+    }
+
+    renderWeatherOverlay(stack) {
+        const w = this.rayancraft.world.weather;
+        if (!w || w === "clear") return;
+        const alpha = w === "thunder" ? 0.22 : 0.13;
+        this.drawRect(stack, 0, 0, this.window.width, this.window.height, w === "thunder" ? "#3a4a6e" : "#4a6e8a", alpha);
+        // simple rain streaks
+        stack.save();
+        stack.strokeStyle = "rgba(180,220,255,0.5)";
+        stack.lineWidth = 1;
+        const t = Date.now() / 30;
+        for (let i = 0; i < 60; i++) {
+            const x = (i * 67 + t * (20 + i % 5)) % this.window.width;
+            const y = (i * 37 + t * 40) % this.window.height;
+            stack.beginPath();
+            stack.moveTo(x, y);
+            stack.lineTo(x - 2, y + 8);
+            stack.stroke();
+        }
+        stack.restore();
+    }
+
     renderHotbar(stack, x, y) {
         // Render background
         this.drawSprite(stack, this.textureHotbar, 0, 0, 200, 22, x, y, 200, 22)
@@ -92,29 +169,29 @@ export default class IngameOverlay extends Gui {
             this.textureHotbar,
             0, 22,
             24, 24,
-            x + this.minecraft.player.inventory.selectedSlotIndex * 20 - 1, y - 1,
+            x + this.rayancraft.player.inventory.selectedSlotIndex * 20 - 1, y - 1,
             24, 24
         )
 
         // To make the items darker
-        let brightness = this.minecraft.isPaused() ? 0.5 : 1; // TODO find a better solution
+        let brightness = this.rayancraft.isPaused() ? 0.5 : 1; // TODO find a better solution
 
-        this.minecraft.itemRenderer.prepareRender("hotbar");
+        this.rayancraft.itemRenderer.prepareRender("hotbar");
 
         // Render items
         for (let i = 0; i < 9; i++) {
-            let typeId = this.minecraft.player.inventory.getItemInSlot(i);
+            let typeId = this.rayancraft.player.inventory.getItemInSlot(i);
             if (typeId !== 0) {
                 let block = Block.getById(typeId);
-                this.minecraft.itemRenderer.renderItemInGui("hotbar", i, block, Math.floor(x + i * 20 + 11), y + 11, brightness);
+                this.rayancraft.itemRenderer.renderItemInGui("hotbar", i, block, Math.floor(x + i * 20 + 11), y + 11, brightness);
             }
         }
     }
 
     renderLeftDebugOverlay(stack, filters = []) {
-        let world = this.minecraft.world;
-        let player = this.minecraft.player;
-        let worldRenderer = this.minecraft.worldRenderer;
+        let world = this.rayancraft.world;
+        let player = this.rayancraft.player;
+        let worldRenderer = this.rayancraft.worldRenderer;
 
         let x = player.x;
         let y = player.y;
@@ -161,12 +238,12 @@ export default class IngameOverlay extends Gui {
             }
         }
 
-        let fps = Math.floor(this.minecraft.fps);
-        let viewDistance = this.minecraft.settings.viewDistance;
+        let fps = Math.floor(this.rayancraft.fps);
+        let viewDistance = this.rayancraft.settings.viewDistance;
         let lightUpdates = world.lightUpdateQueue.length;
         let chunkUpdates = worldRenderer.chunkSectionUpdateQueue.length;
         let entities = world.entities.length;
-        let particles = this.minecraft.particleRenderer.particles.length;
+        let particles = this.rayancraft.particleRenderer.particles.length;
         let skyLight = world.getSavedLightValue(EnumSkyBlock.SKY, blockX, blockY, blockZ);
         let blockLight = world.getSavedLightValue(EnumSkyBlock.BLOCK, blockX, blockY, blockZ);
         let lightLevel = world.getTotalLightAt(blockX, blockY, blockZ);
@@ -174,7 +251,7 @@ export default class IngameOverlay extends Gui {
 
         let soundsLoaded = 0;
         let soundsPlaying = 0;
-        let soundPool = this.minecraft.soundManager.soundPool;
+        let soundPool = this.rayancraft.soundManager.soundPool;
         for (let [id, sounds] of Object.entries(soundPool)) {
             for (let sound of sounds) {
                 soundsLoaded++;
@@ -188,8 +265,8 @@ export default class IngameOverlay extends Gui {
         let towards = "Towards " + (facing.isPositive() ? "positive" : "negative") + " " + (facing.isXAxis() ? "X" : "Z");
 
         let lines = [
-            "js-minecraft " + Minecraft.VERSION,
-            fps + " fps (" + chunkUpdates + " chunk updates) T: " + this.minecraft.maxFps,
+            "js-rayancraft " + rayancraft.VERSION,
+            fps + " fps (" + chunkUpdates + " chunk updates) T: " + this.rayancraft.maxFps,
             "C: " + visibleChunks + "/" + loadedChunks + " D: " + viewDistance + ", L: " + lightUpdates,
             "E: " + visibleEntities + "/" + entities + ", P: " + particles,
             "",
@@ -202,7 +279,7 @@ export default class IngameOverlay extends Gui {
             "",
             "Sounds: " + soundsPlaying + "/" + soundsLoaded,
             "Time: " + world.time % 24000 + " (Day " + Math.floor(world.time / 24000) + ")",
-            "Cursor: " + this.minecraft.window.focusState.getName()
+            "Cursor: " + this.rayancraft.window.focusState.getName()
         ]
 
         // Hit result
@@ -243,9 +320,9 @@ export default class IngameOverlay extends Gui {
     }
 
     renderRightDebugOverlay(stack) {
-        let memoryLimit = this.minecraft.window.getMemoryLimit();
-        let memoryUsed = this.minecraft.window.getMemoryUsed();
-        let memoryAllocated = this.minecraft.window.getMemoryAllocated();
+        let memoryLimit = this.rayancraft.window.getMemoryLimit();
+        let memoryUsed = this.rayancraft.window.getMemoryUsed();
+        let memoryAllocated = this.rayancraft.window.getMemoryAllocated();
 
         let usedPercentage = Math.floor(memoryUsed / memoryLimit * 100);
         let allocatedPercentage = Math.floor(memoryAllocated / memoryLimit * 100);

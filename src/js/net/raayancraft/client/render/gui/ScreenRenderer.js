@@ -1,7 +1,7 @@
 export default class ScreenRenderer {
 
-    constructor(minecraft, window) {
-        this.minecraft = minecraft;
+    constructor(rayancraft, window) {
+        this.rayancraft = rayancraft;
         this.window = window;
     }
 
@@ -22,13 +22,13 @@ export default class ScreenRenderer {
     render(partialTicks) {
         let scale = this.getLimitedScaleFactor();
 
-        let mouseX = this.minecraft.window.mouseX;
-        let mouseY = this.minecraft.window.mouseY;
+        let mouseX = this.rayancraft.window.mouseX;
+        let mouseY = this.rayancraft.window.mouseY;
 
         this.stack2d.save();
 
         // Draw world to canvas
-        if (this.minecraft.isInGame()) {
+        if (this.rayancraft.isInGame()) {
             this.stack2d.drawImage(this.window.canvasWorld, 0, 0, this.window.width * scale, this.window.height * scale);
         } else {
             this.reset();
@@ -39,13 +39,13 @@ export default class ScreenRenderer {
 
         try {
             // Render in-game overlay
-            if (this.minecraft.isInGame() && this.minecraft.loadingScreen === null) {
-                this.minecraft.ingameOverlay.render(this.stack2d, mouseX, mouseY, partialTicks);
+            if (this.rayancraft.isInGame() && this.rayancraft.loadingScreen === null) {
+                this.rayancraft.ingameOverlay.render(this.stack2d, mouseX, mouseY, partialTicks);
             }
 
             // Render current screen
-            if (this.minecraft.currentScreen !== null) {
-                this.minecraft.currentScreen.drawScreen(this.stack2d, mouseX, mouseY, partialTicks)
+            if (this.rayancraft.currentScreen !== null) {
+                this.rayancraft.currentScreen.drawScreen(this.stack2d, mouseX, mouseY, partialTicks)
             }
         } catch (e) {
             console.error(e);

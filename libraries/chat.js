@@ -1,7 +1,7 @@
 // https://github.com/janispritzkau/mc-chat-format
 
 /**
- * Converts a Minecraft chat component to a formatted string.
+ * Converts a rayancraft chat component to a formatted string.
  * */
 export function format(component, options = {}) {
     const text = formatString(convert(component, options), options.useAnsiCodes);
@@ -31,7 +31,7 @@ export function format(component, options = {}) {
  */
 export function convert(component, options = {}) {
     if (typeof component == "string") {
-        return options.keepOld ? {text: component} : convertOld(component);
+        return options.keepOld ? { text: component } : convertOld(component);
     }
     if (component.extra) {
         component.extra = component.extra.map(x => convert(x, options));
@@ -42,7 +42,7 @@ export function convert(component, options = {}) {
         delete component.insertion;
     }
     if (!options.keepOld) {
-        const {text, extra} = convertOld(component.text);
+        const { text, extra } = convertOld(component.text);
         component.text = text;
         if (extra && component.extra)
             component.extra = [...extra, ...component.extra];
@@ -57,14 +57,14 @@ export function convert(component, options = {}) {
  * to the current JSON chat system.
  */
 export function convertOld(text) {
-    let c = {text: ""};
+    let c = { text: "" };
     const extra = [];
     for (const [i, t] of text.split(/ยง(.)/).entries()) {
         if (i === 0) {
             c.text = t;
         } else if (i % 2 === 0) {
             if (t.length !== 0)
-                extra.push({...c, text: t});
+                extra.push({ ...c, text: t });
         } else
             switch (t) {
                 case "k":
@@ -83,7 +83,7 @@ export function convertOld(text) {
                     c.bold = true;
                     break;
                 case "r":
-                    c = {text: c.text};
+                    c = { text: c.text };
                     break;
                 case "0":
                     c.color = "black";
@@ -135,7 +135,7 @@ export function convertOld(text) {
                     break;
             }
     }
-    c = {text: c.text};
+    c = { text: c.text };
     if (extra.length > 0)
         c.extra = extra;
     return c;
@@ -143,15 +143,15 @@ export function convertOld(text) {
 
 /** Flattens a nested `StringComponent`. */
 export function flatten(component) {
-    const {text, extra, ...rest} = component;
-    const array = [{text, ...rest}];
+    const { text, extra, ...rest } = component;
+    const array = [{ text, ...rest }];
     if (extra)
         array.push(...flattenArray(extra.map(c => {
             if (typeof c == "string")
-                return [{text: c, ...rest}];
+                return [{ text: c, ...rest }];
             if (!('text' in c))
                 throw new Error("Not a StringComponent");
-            return flatten(c).map(c => ({...c, ...rest, ...c}));
+            return flatten(c).map(c => ({ ...c, ...rest, ...c }));
         })));
     return array;
 }
@@ -233,5 +233,5 @@ function flattenArray(array) {
 
 /** @deprecated Use `format(convert(component))` instead */
 export function chatToText(component, translation) {
-    return format(component, {translation});
+    return format(component, { translation });
 }

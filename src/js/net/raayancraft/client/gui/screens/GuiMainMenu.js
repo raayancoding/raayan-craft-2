@@ -4,7 +4,7 @@ import GuiOptions from "./GuiOptions.js";
 import * as THREE from "../../../../../../../libraries/three.module.js";
 import { BackSide } from "../../../../../../../libraries/three.module.js";
 import MathHelper from "../../../util/MathHelper.js";
-import Minecraft from "../../Minecraft.js";
+import rayancraft from "../../Minecraft.js";
 import GuiCreateWorld from "./GuiCreateWorld.js";
 import GuiDirectConnect from "./GuiDirectConnect.js";
 
@@ -24,13 +24,16 @@ export default class GuiMainMenu extends GuiScreen {
         let y = this.height / 4 + 48;
 
         this.buttonList.push(new GuiButton("Singleplayer", this.width / 2 - 100, y, 200, 20, () => {
-            this.minecraft.displayScreen(new GuiCreateWorld(this));
+            this.rayancraft.displayScreen(new GuiCreateWorld(this));
         }));
-        this.buttonList.push(new GuiButton("Options...", this.width / 2 - 100, y + 24 + 12, 98, 20, () => {
-            this.minecraft.displayScreen(new GuiOptions(this));
+        this.buttonList.push(new GuiButton("Multiplayer", this.width / 2 - 100, y + 24, 200, 20, () => {
+            this.rayancraft.displayScreen(new GuiDirectConnect(this));
         }));
-        this.buttonList.push(new GuiButton("Quit Game", this.width / 2 + 2, y + 72 + 12, 98, 20, () => {
-            this.minecraft.stop();
+        this.buttonList.push(new GuiButton("Options...", this.width / 2 - 100, y + 24 * 2 + 12, 98, 20, () => {
+            this.rayancraft.displayScreen(new GuiOptions(this));
+        }));
+        this.buttonList.push(new GuiButton("Quit Game", this.width / 2 + 2, y + 24 * 2 + 12, 98, 20, () => {
+            this.rayancraft.stop();
         }));
 
         this.initPanoramaRenderer();
@@ -49,8 +52,8 @@ export default class GuiMainMenu extends GuiScreen {
         this.camera.rotation.x = -MathHelper.toRadians(rotationX + 180);
         this.camera.rotation.y = -MathHelper.toRadians(rotationY - 180);
         this.camera.updateProjectionMatrix();
-        this.minecraft.worldRenderer.webRenderer.clear();
-        this.minecraft.worldRenderer.webRenderer.render(this.scene, this.camera);
+        this.rayancraft.worldRenderer.webRenderer.clear();
+        this.rayancraft.worldRenderer.webRenderer.render(this.scene, this.camera);
 
         // Draw panorama overlay
         this.drawGradientRect(stack, 0, 0, this.width, this.height, 'rgba(255,255,255,0.5)', 'rgb(255,255,255,0)');
@@ -60,7 +63,7 @@ export default class GuiMainMenu extends GuiScreen {
         this.drawLogo(stack, x, y);
 
         // Draw version
-        this.drawString(stack, "raayancraft " + Minecraft.VERSION, 2, this.height - 10, 0xFFFFFFff);
+        this.drawString(stack, "raayancraft " + rayancraft.VERSION, 2, this.height - 10, 0xFFFFFFff);
 
         // Draw buttons
         super.drawScreen(stack, mouseX, mouseY, partialTicks);
@@ -105,7 +108,7 @@ export default class GuiMainMenu extends GuiScreen {
         // Click on GitHub text
         let mouseOver = mouseX > this.width / 2 + 70 && mouseY > this.height - 20;
         if (mouseOver) {
-            this.minecraft.window.openUrl(Minecraft.URL_GITHUB, true);
+            this.rayancraft.window.openUrl(rayancraft.URL_GITHUB, true);
         }
     }
 
@@ -117,27 +120,27 @@ export default class GuiMainMenu extends GuiScreen {
         let materials = [
             new THREE.MeshBasicMaterial({
                 side: BackSide,
-                map: this.minecraft.getThreeTexture("gui/title/background/panorama_1.png")
+                map: this.rayancraft.getThreeTexture("gui/title/background/panorama_1.png")
             }),
             new THREE.MeshBasicMaterial({
                 side: BackSide,
-                map: this.minecraft.getThreeTexture("gui/title/background/panorama_3.png")
+                map: this.rayancraft.getThreeTexture("gui/title/background/panorama_3.png")
             }),
             new THREE.MeshBasicMaterial({
                 side: BackSide,
-                map: this.minecraft.getThreeTexture("gui/title/background/panorama_4.png")
+                map: this.rayancraft.getThreeTexture("gui/title/background/panorama_4.png")
             }),
             new THREE.MeshBasicMaterial({
                 side: BackSide,
-                map: this.minecraft.getThreeTexture("gui/title/background/panorama_5.png")
+                map: this.rayancraft.getThreeTexture("gui/title/background/panorama_5.png")
             }),
             new THREE.MeshBasicMaterial({
                 side: BackSide,
-                map: this.minecraft.getThreeTexture("gui/title/background/panorama_0.png")
+                map: this.rayancraft.getThreeTexture("gui/title/background/panorama_0.png")
             }),
             new THREE.MeshBasicMaterial({
                 side: BackSide,
-                map: this.minecraft.getThreeTexture("gui/title/background/panorama_2.png")
+                map: this.rayancraft.getThreeTexture("gui/title/background/panorama_2.png")
             })
         ];
 
@@ -154,17 +157,17 @@ export default class GuiMainMenu extends GuiScreen {
         this.camera.rotation.order = 'ZYX';
 
         // Apply blur
-        let style = this.minecraft.window.canvas.style;
+        let style = this.rayancraft.window.canvas.style;
         style.backdropFilter = "blur(10px)";
         style.webkitBackdropFilter = "blur(10px)";
-        this.minecraft.window.wrapper.insertBefore(this.minecraft.window.canvasWorld, this.minecraft.window.canvas);
+        this.rayancraft.window.wrapper.insertBefore(this.rayancraft.window.canvasWorld, this.rayancraft.window.canvas);
     }
 
     onClose() {
         // Remove blur
-        let style = this.minecraft.window.canvas.style;
+        let style = this.rayancraft.window.canvas.style;
         style.backdropFilter = "";
         style.webkitBackdropFilter = "";
-        this.minecraft.window.wrapper.removeChild(this.minecraft.window.canvasWorld);
+        this.rayancraft.window.wrapper.removeChild(this.rayancraft.window.canvasWorld);
     }
 }

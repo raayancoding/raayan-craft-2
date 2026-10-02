@@ -39,8 +39,8 @@ export default class GuiContainerCreative extends GuiContainer {
     }
 
     keyTyped(key, character) {
-        if (key === this.minecraft.settings.keyOpenInventory) {
-            this.minecraft.displayScreen(null);
+        if (key === this.rayancraft.settings.keyOpenInventory) {
+            this.rayancraft.displayScreen(null);
             return true;
         }
 

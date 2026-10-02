@@ -13,6 +13,7 @@ export default class GuiCreateWorld extends GuiScreen {
         super();
 
         this.previousScreen = previousScreen;
+        this.gameMode = 0; // 0 survival (pure default), 1 creative
     }
 
     init() {
@@ -23,6 +24,12 @@ export default class GuiCreateWorld extends GuiScreen {
         this.fieldSeed = new GuiTextField(this.width / 2 - 100, y + 30, 200, 20)
         this.fieldSeed.maxLength = 30;
         this.buttonList.push(this.fieldSeed);
+
+        this.gameModeButton = new GuiButton("Gamemode: Survival", this.width / 2 - 100, y + 60, 200, 20, () => {
+            this.gameMode = this.gameMode === 0 ? 1 : 0;
+            this.gameModeButton.string = "Gamemode: " + (this.gameMode === 0 ? "Survival" : "Creative");
+        });
+        this.buttonList.push(this.gameModeButton);
 
         this.buttonList.push(new GuiButton("Create New World", this.width / 2 - 155, y + 110, 150, 20, () => {
             let seed = this.fieldSeed.getText();
@@ -37,15 +44,16 @@ export default class GuiCreateWorld extends GuiScreen {
             }
 
             // Load world
-            let world = new World(this.minecraft);
+            let world = new World(this.rayancraft);
             world.setChunkProvider(new ChunkProviderGenerate(world, seed));
             world.getChunkProvider().findSpawn();
 
-            this.minecraft.playerController = new PlayerController(this.minecraft);
-            this.minecraft.loadWorld(world);
+            this.rayancraft.playerController = new PlayerController(this.rayancraft);
+            this.rayancraft.pendingGameMode = this.gameMode;
+            this.rayancraft.loadWorld(world);
         }));
         this.buttonList.push(new GuiButton("Cancel", this.width / 2 + 5, y + 110, 150, 20, () => {
-            this.minecraft.displayScreen(this.previousScreen);
+            this.rayancraft.displayScreen(this.previousScreen);
         }));
     }
 

@@ -6,7 +6,7 @@ export default class Command {
         this.description = description;
     }
 
-    execute(minecraft, args) {
+    execute(rayancraft, args) {
         return false;
     }
 

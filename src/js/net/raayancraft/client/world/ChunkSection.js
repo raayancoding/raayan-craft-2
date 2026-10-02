@@ -45,7 +45,7 @@ export default class ChunkSection {
         this.isModified = false;
         this.group.clear();
 
-        let ambientOcclusion = this.world.minecraft.settings.ambientOcclusion;
+        let ambientOcclusion = this.world.rayancraft.settings.ambientOcclusion;
         let tessellator = renderer.blockRenderer.tessellator;
 
         // Two render phases for solid and translucent

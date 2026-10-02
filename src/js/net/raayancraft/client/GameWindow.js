@@ -1,4 +1,4 @@
-import Minecraft from "./Minecraft.js";
+import rayancraft from "./Minecraft.js";
 import FocusStateType from "../util/FocusStateType.js";
 import GuiIngameMenu from "./gui/screens/GuiIngameMenu.js";
 import Keyboard from "../util/Keyboard.js";
@@ -6,8 +6,8 @@ import GuiLoadingScreen from "./gui/screens/GuiLoadingScreen.js";
 
 export default class GameWindow {
 
-    constructor(minecraft, canvasWrapperId) {
-        this.minecraft = minecraft;
+    constructor(rayancraft, canvasWrapperId) {
+        this.rayancraft = rayancraft;
 
         this.width = 0;
         this.height = 0;
@@ -67,16 +67,16 @@ export default class GameWindow {
         });
         this.registerListener(document, 'mousedown', event => {
             // In-Game mouse click
-            this.minecraft.onMouseClicked(event.button);
+            this.rayancraft.onMouseClicked(event.button);
 
             // Start interval to repeat the mouse event
             if (this.mouseDownInterval !== null) {
                 clearInterval(this.mouseDownInterval);
             }
-            this.mouseDownInterval = setInterval(_ => this.minecraft.onMouseClicked(event.button), 250);
+            this.mouseDownInterval = setInterval(_ => this.rayancraft.onMouseClicked(event.button), 250);
 
             // Handle mouse click on screen
-            let currentScreen = this.minecraft.currentScreen;
+            let currentScreen = this.rayancraft.currentScreen;
             if (currentScreen !== null) {
                 currentScreen.mouseClicked(
                     event.x / this.scaleFactor,
@@ -89,7 +89,7 @@ export default class GameWindow {
             this.requestCursorUpdate();
 
             // Request lock on click
-            if (this.minecraft.currentScreen === null && this.focusState === FocusStateType.EXITED) {
+            if (this.rayancraft.currentScreen === null && this.focusState === FocusStateType.EXITED) {
                 this.updateFocusState(FocusStateType.REQUEST_LOCK);
             }
 
@@ -103,7 +103,7 @@ export default class GameWindow {
             this.mouseMotionY = -event.movementY;
 
             // Handle mouse move on screen
-            let currentScreen = this.minecraft.currentScreen;
+            let currentScreen = this.rayancraft.currentScreen;
             if (currentScreen !== null) {
                 currentScreen.mouseDragged(event.x / this.scaleFactor, event.y / this.scaleFactor, event.code);
             }
@@ -112,7 +112,7 @@ export default class GameWindow {
         });
         this.registerListener(document, 'mouseup', event => {
             // Handle mouse release on screen
-            let currentScreen = this.minecraft.currentScreen;
+            let currentScreen = this.rayancraft.currentScreen;
             if (currentScreen !== null) {
                 currentScreen.mouseReleased(
                     event.x / this.scaleFactor,
@@ -179,15 +179,15 @@ export default class GameWindow {
             }
 
             // Handle escape press if focus is still in requesting state
-            if (event.key === 'Escape' && this.minecraft.currentScreen === null) {
+            if (event.key === 'Escape' && this.rayancraft.currentScreen === null) {
                 this.updateFocusState(FocusStateType.REQUEST_EXIT);
                 return;
             }
 
-            let currentScreen = this.minecraft.currentScreen;
+            let currentScreen = this.rayancraft.currentScreen;
             if (currentScreen === null) {
                 // Handle in-game key press
-                this.minecraft.onKeyPressed(event.code);
+                this.rayancraft.onKeyPressed(event.code);
             } else {
                 // Handle key type on screen
                 currentScreen.keyTyped(event.code, event.key);
@@ -197,7 +197,7 @@ export default class GameWindow {
         }, false);
         this.registerListener(window, 'keyup', event => {
             // Handle key release on screen
-            let currentScreen = this.minecraft.currentScreen;
+            let currentScreen = this.rayancraft.currentScreen;
             if (currentScreen !== null) {
                 currentScreen.keyReleased(event.code);
             }
@@ -208,7 +208,7 @@ export default class GameWindow {
 
             // Handle mouse scroll
             let delta = Math.sign(event.deltaY);
-            this.minecraft.onMouseScroll(delta);
+            this.rayancraft.onMouseScroll(delta);
         });
     }
 
@@ -226,7 +226,7 @@ export default class GameWindow {
                 let y = touch.pageY;
 
                 // Handle mouse click on screen
-                let currentScreen = this.minecraft.currentScreen;
+                let currentScreen = this.rayancraft.currentScreen;
                 if (currentScreen !== null) {
                     currentScreen.mouseClicked(
                         x / this.scaleFactor,
@@ -283,7 +283,7 @@ export default class GameWindow {
                 let y = touch.pageY;
 
                 // Handle mouse move on screen
-                let currentScreen = this.minecraft.currentScreen;
+                let currentScreen = this.rayancraft.currentScreen;
                 if (currentScreen !== null) {
                     currentScreen.mouseDragged(
                         x / this.scaleFactor,
@@ -309,7 +309,7 @@ export default class GameWindow {
         this.registerListener(document, 'touchend', event => {
             // Break block
             if (!prevTouched && touchStartTime !== 0 && (Date.now() - touchStartTime) < 1000) {
-                this.minecraft.onMouseClicked(2);
+                this.rayancraft.onMouseClicked(2);
             }
 
             prevTouched = false;
@@ -322,7 +322,7 @@ export default class GameWindow {
                 let y = touch.pageY;
 
                 // Handle mouse release on screen
-                let currentScreen = this.minecraft.currentScreen;
+                let currentScreen = this.rayancraft.currentScreen;
                 if (currentScreen !== null) {
                     currentScreen.mouseReleased(
                         x / this.scaleFactor,
@@ -349,7 +349,7 @@ export default class GameWindow {
         setInterval(() => {
             if (touchStartTime !== 0 && (Date.now() - touchStartTime) > 250) {
                 touchStartTime = Date.now();
-                this.minecraft.onMouseClicked(0);
+                this.rayancraft.onMouseClicked(0);
             }
         }, 200);
     }
@@ -360,8 +360,8 @@ export default class GameWindow {
         let wrapperWidth = this.width * this.scaleFactor;
         let wrapperHeight = this.height * this.scaleFactor;
 
-        let worldRenderer = this.minecraft.worldRenderer;
-        let itemRenderer = this.minecraft.itemRenderer;
+        let worldRenderer = this.rayancraft.worldRenderer;
+        let itemRenderer = this.rayancraft.itemRenderer;
 
         // Update world renderer size and camera
         worldRenderer.camera.aspect = this.width / this.height;
@@ -400,19 +400,19 @@ export default class GameWindow {
         }
 
         // Reinitialize gui
-        this.minecraft.screenRenderer.initialize();
+        this.rayancraft.screenRenderer.initialize();
 
         // Reinitialize current screen
-        if (this.minecraft.currentScreen !== null) {
-            this.minecraft.currentScreen.setup(this.minecraft, this.width, this.height);
+        if (this.rayancraft.currentScreen !== null) {
+            this.rayancraft.currentScreen.setup(this.rayancraft, this.width, this.height);
         }
 
-        this.minecraft.ingameOverlay.chatOverlay.setDirty();
+        this.rayancraft.ingameOverlay.chatOverlay.setDirty();
 
         // Render first frame
-        if (this.minecraft.isInGame()) {
-            this.minecraft.worldRenderer.render(0);
-            this.minecraft.onRender(0)
+        if (this.rayancraft.isInGame()) {
+            this.rayancraft.worldRenderer.render(0);
+            this.rayancraft.onRender(0)
         }
     }
 
@@ -437,7 +437,7 @@ export default class GameWindow {
 
     isLocked() {
         // The actual definition for the game if the cursor is locked or not
-        return this.focusState.isLock() && this.minecraft.currentScreen === null;
+        return this.focusState.isLock() && this.rayancraft.currentScreen === null;
     }
 
     updateFocusState(state) {
@@ -459,16 +459,16 @@ export default class GameWindow {
 
         // Open menu on exit
         if (prevLock !== nextLock) {
-            let currentScreen = this.minecraft.currentScreen;
+            let currentScreen = this.rayancraft.currentScreen;
 
             // Open in-game menu
             if (currentScreen === null && !nextLock) {
-                this.minecraft.displayScreen(new GuiIngameMenu());
+                this.rayancraft.displayScreen(new GuiIngameMenu());
             }
 
             // Close current screen
             if (!(currentScreen instanceof GuiLoadingScreen) && nextLock) {
-                this.minecraft.displayScreen(null);
+                this.rayancraft.displayScreen(null);
                 this.lastIngameSwitchTime = Date.now();
             }
         }
@@ -530,7 +530,7 @@ export default class GameWindow {
     }
 
     close() {
-        this.openUrl(Minecraft.URL_GITHUB);
+        this.openUrl(rayancraft.URL_GITHUB);
     }
 
     async getClipboardText() {
@@ -555,8 +555,8 @@ export default class GameWindow {
 
     initialSoundEngine() {
         // Create sound engine (It has to be created after user interaction)
-        if (!this.minecraft.soundManager.isCreated()) {
-            this.minecraft.soundManager.create(this.minecraft.worldRenderer);
+        if (!this.rayancraft.soundManager.isCreated()) {
+            this.rayancraft.soundManager.create(this.rayancraft.worldRenderer);
         }
     }
 

@@ -1,7 +1,7 @@
 export default class GrassColorizer {
 
-    constructor(minecraft) {
-        this.texture = minecraft.resources["misc/grasscolor.png"];
+    constructor(rayancraft) {
+        this.texture = rayancraft.resources["misc/grasscolor.png"];
 
         this.bitMap = this.createBitMap(this.texture);
     }
