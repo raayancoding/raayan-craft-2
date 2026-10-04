@@ -19,6 +19,7 @@ import GuiChat from "./gui/screens/GuiChat.js";
 import CommandHandler from "./command/CommandHandler.js";
 import GuiContainerCreative from "./gui/screens/container/GuiContainerCreative.js";
 import GuiContainerSurvival from "./gui/screens/container/GuiContainerSurvival.js";
+import Achievements from "./gui/Achievements.js";
 import GameProfile from "../util/GameProfile.js";
 import UUID from "../util/UUID.js";
 import FocusStateType from "../util/FocusStateType.js";
@@ -79,6 +80,12 @@ export default class rayancraft {
 
         // Command handler
         this.commandHandler = new CommandHandler(this);
+
+        // Achievements + toasts
+        this.achievements = new Achievements(this);
+
+        // Chest storage: key "x,y,z" -> array of 27 block ids
+        this.chestData = {};
 
         this.frames = 0;
         this.lastTime = Date.now();
@@ -400,9 +407,18 @@ export default class rayancraft {
                         if (dot > 0.85 && d < bestD) { best = e; bestD = d; }
                     }
                     if (best) {
-                        best.damage(4, "generic");
+                        // Crit: falling attack deals 1.5x + burst particles (pure juice)
+                        const crit = !this.player.onGround && this.player.motionY < -0.05;
+                        best.damage(crit ? 6 : 4, "generic");
                         this.player.swingArm();
-                        if (best.isDead) this.addMessageToChat("§7Slain " + best.constructor.name);
+                        if (crit) {
+                            for (let i = 0; i < 8; i++) this.particleRenderer.spawnBlockBreakParticle(this.world, Math.floor(best.x), Math.floor(best.y + 1), Math.floor(best.z));
+                            this.addMessageToChat("§eCRIT!");
+                        }
+                        if (best.isDead) {
+                            this.addMessageToChat("§7Slain " + best.constructor.name);
+                            if (best.isMyth && this.achievements) this.achievements.unlock("myth");
+                        }
                         this.worldRenderer.flushRebuild = true;
                         return;
                     }
@@ -442,7 +458,13 @@ export default class rayancraft {
                                         this.player.experienceLevel++;
                                         this.addMessageToChat("§aLevel up! Level " + this.player.experienceLevel);
                                     }
+                                    if (typeId === 56 && this.achievements) this.achievements.unlock("diamond");
+                                    if (typeId === 201 && this.achievements) this.achievements.unlock("copper");
                                 }
+                                // Food from blocks: melons/pumpkins feed you, leaves may drop apples
+                                if (typeId === 103) { this.player.hunger = Math.min(20, this.player.hunger + 4); this.addMessageToChat("§aYum! +4 hunger"); }
+                                if (typeId === 86) { this.player.hunger = Math.min(20, this.player.hunger + 2); }
+                                if (typeId === 18 && Math.random() < 0.1) { this.player.hunger = Math.min(20, this.player.hunger + 2); this.addMessageToChat("§aAn apple fell from the leaves! +2 hunger"); }
                                 this.player.hunger = Math.max(0, this.player.hunger - 0.1);
                             }
 
@@ -478,9 +500,20 @@ export default class rayancraft {
                 }
             }
 
-            // Place block
+            // Place block / use block
             if (button === 2) {
                 if (hitResult != null) {
+                    // Right-clicking a chest opens it instead of placing (pure storage)
+                    try {
+                        const targetId = this.world.getBlockAt(hitResult.x, hitResult.y, hitResult.z);
+                        if (targetId === 54) {
+                            import("./gui/screens/container/GuiContainerChest.js").then(m => {
+                                this.displayScreen(new m.default(this.player, hitResult.x, hitResult.y, hitResult.z));
+                            }).catch(() => { });
+                            if (this.achievements) this.achievements.unlock("chest");
+                            return;
+                        }
+                    } catch (e) { }
                     let x = hitResult.x + hitResult.face.x;
                     let y = hitResult.y + hitResult.face.y;
                     let z = hitResult.z + hitResult.face.z;

@@ -29,6 +29,8 @@ export default class World {
         this.weather = "clear";
         this.weatherTime = 0;
         this.difficulty = 1;
+        this.bloodMoon = false;
+        this.lightningFlash = 0;
 
         // Update lights async
         let scope = this;
@@ -89,11 +91,44 @@ export default class World {
             }
         }
 
+        // Blood Moon event: rare red night, zombie hordes (pure event)
+        try {
+            const tod = this.time % 24000;
+            if (!this.bloodMoon && tod >= 12500 && tod < 12600 && Math.random() < 0.06) {
+                this.bloodMoon = true;
+                this.rayancraft.addMessageToChat("§c☠ BLOOD MOON RISES ☠ — survive the night!");
+            }
+            if (this.bloodMoon && tod < 12000) {
+                this.bloodMoon = false;
+                if (this.rayancraft.player && this.rayancraft.player.isAlive()) {
+                    if (this.rayancraft.achievements) this.rayancraft.achievements.unlock("bloodmoon");
+                    this.rayancraft.addMessageToChat("§eYou survived the Blood Moon!");
+                }
+            }
+            // Lightning strikes during thunder (pure juice)
+            if (this.weather === "thunder" && this.rayancraft.player && Math.random() < 0.008) {
+                const p = this.rayancraft.player;
+                const lx = Math.floor(p.x + Math.random() * 24 - 12);
+                const lz = Math.floor(p.z + Math.random() * 24 - 12);
+                const ly = this.getHeightAt(lx, lz);
+                this.lightningFlash = 6;
+                for (const e of this.entities) {
+                    const d = Math.hypot(e.x - lx, e.z - lz);
+                    if (d < 3.5 && e.isAlive && e.isAlive() && !(e.gameMode === 1)) e.damage(5, "generic");
+                }
+                try {
+                    for (let i = 0; i < 10; i++) this.rayancraft.particleRenderer.spawnBlockBreakParticle(this, lx, ly + 1, lz);
+                } catch (e) { }
+            }
+            if (this.lightningFlash > 0) this.lightningFlash--;
+        } catch (e) { }
+
         // Pure mob spawning (singleplayer only)
         try {
             if (this.rayancraft.isSingleplayer && this.rayancraft.isSingleplayer() && this.rayancraft.player && Math.random() < 0.02) {
                 const t = this.time % 24000;
                 const night = t > 12500 && t < 23500;
+                const horde = this.bloodMoon ? 3 : 1; // blood moon triples the horde
                 let pigs = 0, zombies = 0;
                 let myths = 0;
                 for (const e of this.entities) {
@@ -112,7 +147,7 @@ export default class World {
                             pig.setPosition(sx + 0.5, sy + 1, sz + 0.5);
                             if (this.getBlockAt(sx, sy, sz) !== 0) this.addEntity(pig);
                         }).catch(() => { });
-                    } else if (night && zombies < 6) {
+                    } else if (night && zombies < 6 * horde) {
                         import("../entity/EntityZombie.js").then(m => {
                             const id = Date.now() % 100000 + Math.floor(Math.random() * 1000);
                             const z = new m.default(this.rayancraft, this, id);
@@ -601,6 +636,13 @@ export default class World {
         red *= brightness;
         green *= brightness;
         blue *= brightness;
+
+        // Blood Moon: red sky (pure dread)
+        if (this.bloodMoon) {
+            red = Math.min(1, red * 0.4 + 0.55);
+            green *= 0.35;
+            blue *= 0.35;
+        }
 
         return new Vector3(red, green, blue);
     }

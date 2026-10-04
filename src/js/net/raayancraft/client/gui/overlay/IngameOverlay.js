@@ -38,6 +38,10 @@ export default class IngameOverlay extends Gui {
         if (this.rayancraft.isInGame() && this.rayancraft.player) {
             this.renderSurvivalHud(stack, this.window.width / 2 - 91, this.window.height - 22);
             this.renderWeatherOverlay(stack);
+            this.renderDamageOverlays(stack);
+            this.renderToast(stack);
+            this.renderMinimap(stack);
+            this.renderItemTooltip(stack, this.window.width / 2 - 91, this.window.height - 22);
         }
 
         // Bedrock-style touch hints
@@ -133,11 +137,104 @@ export default class IngameOverlay extends Gui {
         const gm = p.gameMode === 0 ? "Survival" : "Creative";
         const bx = Math.floor(p.x), by = Math.floor(p.y), bz = Math.floor(p.z);
         let biome = "";
-        try { biome = this.rayancraft.world.getBiomeName(bx, bz); } catch (e) { }
+        try {
+            biome = this.rayancraft.world.getBiomeName(bx, bz);
+            if (biome === "Cherry Grove" && this.rayancraft.achievements) this.rayancraft.achievements.unlock("cherry");
+            if (this.rayancraft.world.bloodMoon) biome = "☠ Blood Moon";
+        } catch (e) { }
         this.drawString(stack, gm + "  XYZ " + bx + " / " + by + " / " + bz + (biome ? "  " + biome : ""), 4, 4, 0xFFE0E0E0);
         if (this.rayancraft.world.weather && this.rayancraft.world.weather !== "clear") {
             this.drawString(stack, (this.rayancraft.world.weather === "rain" ? "Rain" : "Thunder"), this.window.width - 70, 4, 0xFF7ac8ff);
         }
+    }
+
+    renderDamageOverlays(stack) {
+        const p = this.rayancraft.player, w = this.window;
+        if (!p) return;
+        // Hurt vignette: red flash on damage
+        if (p.hurtTime > 0) {
+            this.drawRect(stack, 0, 0, w.width, w.height, "#c01010", Math.min(0.35, p.hurtTime * 0.035));
+        }
+        // Low health pulse
+        if (p.health > 0 && p.health <= 6) {
+            const pulse = 0.12 + 0.1 * Math.abs(Math.sin(Date.now() / 400));
+            this.drawRect(stack, 0, 0, w.width, w.height, "#a00000", pulse);
+        }
+        // Lightning flash
+        try {
+            if (this.rayancraft.world.lightningFlash > 0) {
+                this.drawRect(stack, 0, 0, w.width, w.height, "#ffffff", 0.5);
+            }
+        } catch (e) { }
+        // Underwater tint
+        try {
+            if (p.isHeadInWater && p.isHeadInWater()) {
+                this.drawRect(stack, 0, 0, w.width, w.height, "#144a8a", 0.28);
+            }
+        } catch (e) { }
+    }
+
+    renderToast(stack) {
+        try {
+            const a = this.rayancraft.achievements;
+            if (!a) return;
+            const t = a.currentToast();
+            if (!t) return;
+            const w = 220, x = this.window.width / 2 - w / 2, y = 28;
+            this.drawRect(stack, x, y, x + w, y + 36, "#212121");
+            this.drawRect(stack, x, y, x + w, y + 2, "#ffdd55");
+            this.drawString(stack, "Achievement: " + t.title, x + 8, y + 6, 0xFFFFFF55);
+            this.drawString(stack, t.desc, x + 8, y + 20, 0xFFFFFFFF);
+        } catch (e) { }
+    }
+
+    renderItemTooltip(stack, hx, hy) {
+        // Selected hotbar item name above the bar (pure)
+        try {
+            const p = this.rayancraft.player;
+            const sel = p.inventory.getItemInSelectedSlot();
+            if (sel !== this.lastSelected) { this.lastSelected = sel; this.tooltipUntil = Date.now() + 1800; }
+            if (sel && Date.now() < (this.tooltipUntil || 0)) {
+                const names = { 1: "Stone", 2: "Grass", 3: "Dirt", 4: "Cobblestone", 5: "Oak Planks", 7: "Bedrock", 9: "Water", 11: "Lava", 12: "Sand", 13: "Gravel", 14: "Gold Ore", 15: "Iron Ore", 16: "Coal Ore", 17: "Oak Log", 18: "Leaves", 20: "Glass", 21: "Lapis Ore", 24: "Sandstone", 35: "Wool", 37: "Dandelion", 38: "Poppy", 45: "Bricks", 46: "TNT", 47: "Bookshelf", 48: "Mossy Cobble", 49: "Obsidian", 50: "Torch", 54: "Chest", 56: "Diamond Ore", 58: "Crafting Table", 61: "Furnace", 73: "Redstone Ore", 79: "Ice", 80: "Snow", 81: "Cactus", 86: "Pumpkin", 87: "Netherrack", 89: "Glowstone", 103: "Melon", 201: "Copper Ore", 202: "Copper Block", 203: "Deepslate", 204: "Amethyst", 205: "Cherry Log", 206: "Cherry Leaves" };
+                this.drawCenteredString(stack, names[sel] || ("Block " + sel), hx + 91, hy - 34, 0xFFFFFFFF);
+            }
+        } catch (e) { }
+    }
+
+    renderMinimap(stack) {
+        // Top-right minimap: 24x24 sampled columns (pure navigation)
+        try {
+            const p = this.rayancraft.player, world = this.rayancraft.world;
+            if (!p || !world) return;
+            const N = 24, cell = 4, size = N * cell;
+            const x0 = this.window.width - size - 6, y0 = 30;
+            this.drawRect(stack, x0 - 2, y0 - 2, x0 + size + 2, y0 + size + 2, "#111111", 0.7);
+            const pcx = Math.floor(p.x), pcz = Math.floor(p.z);
+            for (let ix = 0; ix < N; ix++) for (let iz = 0; iz < N; iz++) {
+                const wx = pcx - N + ix * 2, wz = pcz - N + iz * 2;
+                let color = "#0a0a0a";
+                try {
+                    const h = world.getHeightAt(wx, wz);
+                    const top = world.getBlockAt(wx, h, wz);
+                    if (top === 9) color = "#3a6ed8";
+                    else if (top === 11) color = "#e05a1a";
+                    else if (top === 12 || top === 24) color = "#d8c060";
+                    else if (top === 2) {
+                        const b = world.getBiomeName(wx, wz);
+                        color = b === "Cherry Grove" ? "#f2a7c3" : b === "Desert" ? "#d8c060" : "#4a9a3a";
+                    }
+                    else if (top === 18) color = "#2a6a2a";
+                    else if (top === 206) color = "#f2a7c3";
+                    else if (top === 80) color = "#eef4ff";
+                    else if (top === 0) color = "#0a0a0a";
+                    else color = "#7a7a7a";
+                } catch (e) { }
+                this.drawRect(stack, x0 + ix * cell, y0 + iz * cell, x0 + ix * cell + cell, y0 + iz * cell + cell, color);
+            }
+            // Player arrow (center)
+            const cx = x0 + size / 2, cy = y0 + size / 2;
+            this.drawRect(stack, cx - 2, cy - 2, cx + 2, cy + 2, "#ffffff");
+        } catch (e) { }
     }
 
     renderWeatherOverlay(stack) {

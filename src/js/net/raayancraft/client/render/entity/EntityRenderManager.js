@@ -12,6 +12,7 @@ import EntityBloodGolem from "../../entity/EntityBloodGolem.js";
 import EntityGiantAlex from "../../entity/EntityGiantAlex.js";
 import EntitySiren from "../../entity/EntitySiren.js";
 import EntityBot from "../../entity/EntityBot.js";
+import EntityDog from "../../entity/EntityDog.js";
 
 export default class EntityRenderManager {
 
@@ -29,6 +30,7 @@ export default class EntityRenderManager {
         this.push(EntityGiantAlex, MythRenderer);
         this.push(EntitySiren, MythRenderer);
         this.push(EntityBot, MythRenderer);
+        this.push(EntityDog, MythRenderer);
     }
 
     push(entityType, entityRenderer) {

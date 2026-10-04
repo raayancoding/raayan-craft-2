@@ -11,11 +11,13 @@ const MYTHS = {
     siren: "EntitySiren",
     zombie: "EntityZombie",
     pig: "EntityPig",
-    bot: "EntityBot"
+    bot: "EntityBot",
+    dog: "EntityDog",
+    wolf: "EntityDog"
 };
 
 export default class SummonCommand extends Command {
-    constructor() { super("summon", "<herobrine|303|golem|alex|siren|zombie|pig|bot>", "Summon a creature"); }
+    constructor() { super("summon", "<herobrine|303|golem|alex|siren|zombie|pig|bot|dog>", "Summon a creature"); }
     execute(rayancraft, args) {
         if (args.length < 1 || !rayancraft.player || !rayancraft.world) return false;
         const file = MYTHS[args[0].toLowerCase()];
@@ -31,6 +33,7 @@ export default class SummonCommand extends Command {
             e.setPosition(p.x + 2, p.y + 1, p.z + 2);
             rayancraft.world.addEntity(e);
             rayancraft.addMessageToChat("§eSummoned " + file);
+            if (file === "EntityDog" && rayancraft.achievements) rayancraft.achievements.unlock("dog");
         }).catch(() => { });
         return true;
     }
