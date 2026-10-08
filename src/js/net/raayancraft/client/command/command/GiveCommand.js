@@ -13,7 +13,25 @@ export default class GiveCommand extends Command {
         if (isNaN(id)) {
             // name lookup
             const name = args[0].toLowerCase();
-            const map = { stone: 1, grass: 2, dirt: 3, cobble: 4, planks: 5, wood: 5, bedrock: 7, water: 9, lava: 11, sand: 12, gravel: 13, gold_ore: 14, iron_ore: 15, coal_ore: 16, log: 17, leaves: 18, glass: 20, lapis: 21, sandstone: 24, wool: 35, flower: 38, torch: 50, diamond: 56, crafting: 58, furnace: 61, redstone: 73, snow: 80, cactus: 81, pumpkin: 86, glowstone: 89, obsidian: 49, brick: 45, chest: 54, melon: 103, copper_ore: 201, copper: 202, deepslate: 203, amethyst: 204, cherry_log: 205, cherry_leaves: 206, cherry: 206 };
+            const map = {
+                stone: 1, grass: 2, dirt: 3, cobble: 4, planks: 5, wood: 5,
+                bedrock: 7, water: 9, lava: 11, sand: 12, gravel: 13,
+                gold_ore: 14, iron_ore: 15, coal_ore: 16, log: 17, leaves: 18,
+                glass: 20, lapis: 21, sandstone: 24, wool: 35, flower: 38,
+                torch: 50, diamond: 56, crafting: 58, furnace: 61, redstone: 73,
+                snow: 80, cactus: 81, pumpkin: 86, glowstone: 89, obsidian: 49,
+                brick: 45, chest: 54, melon: 103, copper_ore: 201, copper: 202,
+                deepslate: 203, amethyst: 204, cherry_log: 205, cherry_leaves: 206,
+                cherry: 206, birch_log: 210, birch_leaves: 211, birch_planks: 212,
+                spruce_log: 213, spruce_leaves: 214, spruce_planks: 215,
+                jungle_log: 216, jungle_leaves: 217, jungle_planks: 218,
+                acacia_log: 219, acacia_leaves: 220, acacia_planks: 221,
+                dark_oak_log: 222, dark_oak_leaves: 223, dark_oak_planks: 224,
+                mangrove_log: 225, mangrove_leaves: 226, mangrove_planks: 227,
+                emerald_ore: 129, quartz_ore: 155, ancient_debris: 230,
+                emerald: 129, quartz: 155, debris: 230, note: 25, noteblock: 25,
+                note_block: 25
+            };
             if (!(name in map)) return false;
             id = map[name];
         }

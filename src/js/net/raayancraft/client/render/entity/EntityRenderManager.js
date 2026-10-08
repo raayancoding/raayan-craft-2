@@ -13,6 +13,19 @@ import EntityGiantAlex from "../../entity/EntityGiantAlex.js";
 import EntitySiren from "../../entity/EntitySiren.js";
 import EntityBot from "../../entity/EntityBot.js";
 import EntityDog from "../../entity/EntityDog.js";
+import EntityAnimal from "../../entity/EntityAnimal.js";
+import EntityCow from "../../entity/EntityCow.js";
+import EntitySheep from "../../entity/EntitySheep.js";
+import EntityChicken from "../../entity/EntityChicken.js";
+import EntitySkeleton from "../../entity/EntitySkeleton.js";
+import EntityCreeper from "../../entity/EntityCreeper.js";
+import EntityEnderman from "../../entity/EntityEnderman.js";
+import EntityVillager from "../../entity/EntityVillager.js";
+import EntityIronGolem from "../../entity/EntityIronGolem.js";
+import EntityNull from "../../entity/EntityNull.js";
+import EntityWhiteEnderman from "../../entity/EntityWhiteEnderman.js";
+import EntityWatcher from "../../entity/EntityWatcher.js";
+import EntityShadowSteve from "../../entity/EntityShadowSteve.js";
 
 export default class EntityRenderManager {
 
@@ -31,6 +44,19 @@ export default class EntityRenderManager {
         this.push(EntitySiren, MythRenderer);
         this.push(EntityBot, MythRenderer);
         this.push(EntityDog, MythRenderer);
+        this.push(EntityAnimal, MythRenderer);
+        this.push(EntityCow, MythRenderer);
+        this.push(EntitySheep, MythRenderer);
+        this.push(EntityChicken, MythRenderer);
+        this.push(EntitySkeleton, MythRenderer);
+        this.push(EntityCreeper, MythRenderer);
+        this.push(EntityEnderman, MythRenderer);
+        this.push(EntityVillager, MythRenderer);
+        this.push(EntityIronGolem, MythRenderer);
+        this.push(EntityNull, MythRenderer);
+        this.push(EntityWhiteEnderman, MythRenderer);
+        this.push(EntityWatcher, MythRenderer);
+        this.push(EntityShadowSteve, MythRenderer);
     }
 
     push(entityType, entityRenderer) {

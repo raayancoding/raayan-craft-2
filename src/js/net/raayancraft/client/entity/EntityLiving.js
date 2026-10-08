@@ -43,6 +43,10 @@ export default class EntityLiving extends Entity {
         if (this.isDead || this.health <= 0) return false;
         // Creative / spectator immunity for player
         if (this.isPlayer && this.isPlayer() && this.gameMode === 1) return false;
+        // Protection enchantment (encyclopedia armor enchants)
+        if (this.isPlayer && this.isPlayer() && this.enchants && this.enchants.protection) {
+            amount = Math.max(1, amount - this.enchants.protection);
+        }
         this.health -= amount;
         this.hurtTime = 10;
         if (this.health <= 0) {

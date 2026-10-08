@@ -5,6 +5,12 @@ export default class CraftingManager {
         // log -> planks x4, planks -> sticks handled as blocks (torch uses coal+planks), etc.
         return [
             { inputs: [17], outputs: [{ id: 5, count: 4 }], name: "Oak Planks" },
+            { inputs: [210], outputs: [{ id: 212, count: 4 }], name: "Birch Planks" },
+            { inputs: [213], outputs: [{ id: 215, count: 4 }], name: "Spruce Planks" },
+            { inputs: [216], outputs: [{ id: 218, count: 4 }], name: "Jungle Planks" },
+            { inputs: [219], outputs: [{ id: 221, count: 4 }], name: "Acacia Planks" },
+            { inputs: [222], outputs: [{ id: 224, count: 4 }], name: "Dark Oak Planks" },
+            { inputs: [225], outputs: [{ id: 227, count: 4 }], name: "Mangrove Planks" },
             { inputs: [5, 5], outputs: [{ id: 50, count: 4 }], name: "Sticks->Torches (use planks)" },
             { inputs: [16, 5], outputs: [{ id: 50, count: 4 }], name: "Torch" },
             { inputs: [5, 5, 5, 5], outputs: [{ id: 58, count: 1 }], name: "Crafting Table" },

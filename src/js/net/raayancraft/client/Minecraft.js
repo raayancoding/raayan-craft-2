@@ -388,6 +388,24 @@ export default class rayancraft {
         }
     }
 
+    explodeAt(bx, by, bz, radius) {
+        // Shared explosion: crater + entity damage + particles
+        try {
+            for (let ox = -radius; ox <= radius; ox++) for (let oy = -radius; oy <= radius; oy++) for (let oz = -radius; oz <= radius; oz++) {
+                if (ox * ox + oy * oy + oz * oz > radius * radius) continue;
+                const b = this.world.getBlockAt(bx + ox, by + oy, bz + oz);
+                if (b !== 0 && b !== 7 && b !== 49) this.world.setBlockAt(bx + ox, by + oy, bz + oz, 0);
+            }
+            for (const e of this.world.entities) {
+                if (e.isDead) continue;
+                const d = Math.hypot(e.x - bx, e.y - by, e.z - bz);
+                if (d < radius + 2 && e.isAlive && e.isAlive() && !(e.gameMode === 1)) e.damage(Math.max(2, Math.ceil((radius + 2 - d) * 3)), "generic");
+            }
+            for (let i = 0; i < 16; i++) this.particleRenderer.spawnBlockBreakParticle(this.world, bx, by + 1, bz);
+            this.worldRenderer.flushRebuild = true;
+        } catch (e) { }
+    }
+
     onMouseClicked(button) {
         if (this.window.isLocked()) {
             let hitResult = this.player.rayTrace(5, this.timer.partialTicks);
@@ -409,7 +427,11 @@ export default class rayancraft {
                     if (best) {
                         // Crit: falling attack deals 1.5x + burst particles (pure juice)
                         const crit = !this.player.onGround && this.player.motionY < -0.05;
-                        best.damage(crit ? 6 : 4, "generic");
+                        const ench = this.player.enchants || {};
+                        const eff = this.player.effects || {};
+                        let dmg = 4 + (ench.sharpness || 0) * 1.5 + (eff.strength > 0 ? 2 : 0);
+                        if (crit) dmg *= 1.5;
+                        best.damage(Math.round(dmg), "generic");
                         this.player.swingArm();
                         if (crit) {
                             for (let i = 0; i < 8; i++) this.particleRenderer.spawnBlockBreakParticle(this.world, Math.floor(best.x), Math.floor(best.y + 1), Math.floor(best.z));
@@ -452,7 +474,7 @@ export default class rayancraft {
                             // Survival: small XP + hunger cost; Creative: free
                             if (survival) {
                                 // Ores drop XP (pure)
-                                if ([14, 15, 16, 56, 73, 21, 201].includes(typeId)) {
+                                if ([14, 15, 16, 56, 73, 21, 129, 155, 201].includes(typeId)) {
                                     this.player.experience += 3;
                                     if (this.player.experience >= (this.player.experienceLevel + 1) * 10) {
                                         this.player.experienceLevel++;
@@ -468,8 +490,28 @@ export default class rayancraft {
                                 this.player.hunger = Math.max(0, this.player.hunger - 0.1);
                             }
 
+                            // TNT goes BOOM when mined in Survival (encyclopedia redstone fun)
+                            if (survival && typeId === 46) {
+                                this.world.setBlockAt(hitResult.x, hitResult.y, hitResult.z, 0);
+                                this.explodeAt(hitResult.x, hitResult.y, hitResult.z, 3);
+                                this.addMessageToChat("§cBOOM!");
+                                this.player.swingArm();
+                                this.worldRenderer.flushRebuild = true;
+                                return;
+                            }
                             // Add block to inventory
                             this.player.inventory.addItem(typeId);
+                            // Fortune: bonus drops on ores (efficiency boosts XP)
+                            try {
+                                const ench2 = this.player.enchants || {};
+                                if ([14, 15, 16, 56, 73, 21, 129, 201].includes(typeId) && ench2.fortune > 0) {
+                                    for (let f = 0; f < ench2.fortune; f++) this.player.inventory.addItem(typeId);
+                                    this.addMessageToChat("§bFortune procs! Bonus drops");
+                                }
+                                if ([14, 15, 16, 56, 73, 21, 129, 155, 201].includes(typeId) && ench2.efficiency > 0) {
+                                    this.player.experience += 2 * ench2.efficiency;
+                                }
+                            } catch (e) { }
 
                             // Destroy block
                             this.world.setBlockAt(hitResult.x, hitResult.y, hitResult.z, 0);
@@ -511,6 +553,15 @@ export default class rayancraft {
                                 this.displayScreen(new m.default(this.player, hitResult.x, hitResult.y, hitResult.z));
                             }).catch(() => { });
                             if (this.achievements) this.achievements.unlock("chest");
+                            return;
+                        }
+                        // Note block: right-click plays a pitched note (encyclopedia redstone music)
+                        if (targetId === 25) {
+                            const pitch = 0.6 + ((hitResult.x + hitResult.y + hitResult.z) % 12) * 0.08;
+                            const nb = Block.getById(targetId);
+                            this.soundManager.playSound(nb.getSound().getStepSound(), hitResult.x + 0.5, hitResult.y + 0.5, hitResult.z + 0.5, 1.0, pitch);
+                            this.particleRenderer.spawnBlockBreakParticle(this.world, hitResult.x, hitResult.y + 1, hitResult.z);
+                            this.player.swingArm();
                             return;
                         }
                     } catch (e) { }

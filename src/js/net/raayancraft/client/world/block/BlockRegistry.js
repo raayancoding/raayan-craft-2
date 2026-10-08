@@ -19,6 +19,7 @@ import BlockSimple from "./type/BlockSimple.js";
 import BlockFlower from "./type/BlockFlower.js";
 import BlockLava from "./type/BlockLava.js";
 import BlockCherryLeaves from "./type/BlockCherryLeaves.js";
+import BlockLeavesVariant from "./type/BlockLeavesVariant.js";
 
 export class BlockRegistry {
 
@@ -87,6 +88,31 @@ export class BlockRegistry {
         BlockRegistry.AMETHYST = new BlockSimple(204, 49, { sound: Block.sounds.glass, light: 8 });
         BlockRegistry.CHERRY_LOG = new BlockLog(205, 50);
         BlockRegistry.CHERRY_LEAVES = new BlockCherryLeaves(206, 51);
+        // Wood families: birch/spruce/jungle/acacia/dark oak/mangrove
+        const woodSound = { sound: Block.sounds.wood };
+        BlockRegistry.BIRCH_LOG = new BlockLog(210, 52);
+        BlockRegistry.BIRCH_LEAVES = new BlockLeavesVariant(211, 54, 0x9ac75a);
+        BlockRegistry.BIRCH_PLANKS = new BlockSimple(212, 55, woodSound);
+        BlockRegistry.SPRUCE_LOG = new BlockLog(213, 56);
+        BlockRegistry.SPRUCE_LEAVES = new BlockLeavesVariant(214, 58, 0x2f6b2f);
+        BlockRegistry.SPRUCE_PLANKS = new BlockSimple(215, 59, woodSound);
+        BlockRegistry.JUNGLE_LOG = new BlockLog(216, 60);
+        BlockRegistry.JUNGLE_LEAVES = new BlockLeavesVariant(217, 62, 0x3fa83f);
+        BlockRegistry.JUNGLE_PLANKS = new BlockSimple(218, 63, woodSound);
+        BlockRegistry.ACACIA_LOG = new BlockLog(219, 64);
+        BlockRegistry.ACACIA_LEAVES = new BlockLeavesVariant(220, 66, 0x9ab83a);
+        BlockRegistry.ACACIA_PLANKS = new BlockSimple(221, 67, woodSound);
+        BlockRegistry.DARKOAK_LOG = new BlockLog(222, 68);
+        BlockRegistry.DARKOAK_LEAVES = new BlockLeavesVariant(223, 70, 0x2a5a1f);
+        BlockRegistry.DARKOAK_PLANKS = new BlockSimple(224, 71, woodSound);
+        BlockRegistry.MANGROVE_LOG = new BlockLog(225, 72);
+        BlockRegistry.MANGROVE_LEAVES = new BlockLeavesVariant(226, 74, 0x6a8a2f);
+        BlockRegistry.MANGROVE_PLANKS = new BlockSimple(227, 75, woodSound);
+        // Encyclopedia ores + note block
+        BlockRegistry.EMERALD_ORE = new BlockOre(129, 76);
+        BlockRegistry.QUARTZ_ORE = new BlockOre(155, 77);
+        BlockRegistry.ANCIENT_DEBRIS = new BlockOre(230, 78);
+        BlockRegistry.NOTE_BLOCK = new BlockSimple(25, 79, { sound: Block.sounds.wood });
         // Solid sounds fix
         BlockRegistry.SANDSTONE.sound = Block.sounds.sand;
     }

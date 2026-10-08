@@ -139,6 +139,28 @@ export default class World {
                 const px = Math.floor(this.rayancraft.player.x), pz = Math.floor(this.rayancraft.player.z);
                 const sx = px + Math.floor(Math.random() * 40 - 20), sz = pz + Math.floor(Math.random() * 40 - 20);
                 const sy = this.getHeightAt(sx, sz);
+                // Census (encyclopedia cast)
+                let cows = 0, sheep = 0, chickens = 0, skeletons = 0, creepers = 0, endermen = 0, villagers = 0, golems = 0;
+                for (const e of this.entities) {
+                    const n = e.constructor.name;
+                    if (n === "EntityCow") cows++;
+                    else if (n === "EntitySheep") sheep++;
+                    else if (n === "EntityChicken") chickens++;
+                    else if (n === "EntitySkeleton") skeletons++;
+                    else if (n === "EntityCreeper") creepers++;
+                    else if (n === "EntityEnderman") endermen++;
+                    else if (n === "EntityVillager") villagers++;
+                    else if (n === "EntityIronGolem") golems++;
+                }
+                const spawnSimple = (file, cap, count, cur) => {
+                    if (cur >= cap) return;
+                    import("../entity/" + file + ".js").then(m => {
+                        const id = Date.now() % 100000 + Math.floor(Math.random() * 1000);
+                        const e = new m.default(this.rayancraft, this, id);
+                        e.setPosition(sx + 0.5, sy + 1, sz + 0.5);
+                        if (this.getBlockAt(sx, sy, sz) !== 0) this.addEntity(e);
+                    }).catch(() => { });
+                };
                 if (sy > 0) {
                     if (!night && pigs < 6 && Math.random() < 0.4) {
                         import("../entity/EntityPig.js").then(m => {
@@ -155,7 +177,22 @@ export default class World {
                             this.addEntity(z);
                         }).catch(() => { });
                     }
-                    // Mythical creatures: VERY rare, mostly night, max 1 at a time
+                    // Encyclopedia passives by day, horrors by night
+                    if (!night && Math.random() < 0.25) {
+                        const r = Math.random();
+                        if (r < 0.3) spawnSimple("EntityCow", 4, 0, cows);
+                        else if (r < 0.55) spawnSimple("EntitySheep", 4, 0, sheep);
+                        else if (r < 0.75) spawnSimple("EntityChicken", 4, 0, chickens);
+                        else if (r < 0.9) spawnSimple("EntityVillager", 3, 0, villagers);
+                        else spawnSimple("EntityIronGolem", 1, 0, golems);
+                    }
+                    if (night && Math.random() < 0.3) {
+                        const r = Math.random();
+                        if (r < 0.4) spawnSimple("EntitySkeleton", 4 * horde, 0, skeletons);
+                        else if (r < 0.7) spawnSimple("EntityCreeper", 3 * horde, 0, creepers);
+                        else if (r < 0.85) spawnSimple("EntityEnderman", 2, 0, endermen);
+                    }
+                    // Mythical creatures wave 1: VERY rare, mostly night, max 1 at a time
                     if (myths < 1 && Math.random() < 0.03) {
                         const roll = Math.random();
                         let file = null, warn = "";
@@ -164,6 +201,25 @@ export default class World {
                         else if (night && roll < 0.62) { file = "EntityGiantAlex"; warn = "§6You feel watched. GIANT ALEX stalks you."; }
                         else if (night && roll < 0.79) { file = "EntitySiren"; warn = "§8A siren wails in the dark..."; }
                         else if (roll < 0.9) { file = "EntityBloodGolem"; warn = "§cA BLOOD GOLEM rises!"; }
+                        if (file) {
+                            import("../entity/" + file + ".js").then(m => {
+                                const id = Date.now() % 100000 + Math.floor(Math.random() * 1000);
+                                const myth = new m.default(this.rayancraft, this, id);
+                                myth.isMyth = true;
+                                myth.setPosition(sx + 0.5, sy + 1, sz + 0.5);
+                                this.addEntity(myth);
+                                this.rayancraft.addMessageToChat(warn);
+                            }).catch(() => { });
+                        }
+                    }
+                    // Mythical creatures wave 2 (encyclopedia bestiary): Null, White Enderman, Watcher, Shadow Steve
+                    if (myths < 2 && Math.random() < 0.02) {
+                        const roll = Math.random();
+                        let file = null, warn = "";
+                        if (night && roll < 0.3) { file = "EntityNull"; warn = "§8NULL corrupts the world..."; }
+                        else if (night && roll < 0.55) { file = "EntityWhiteEnderman"; warn = "§fA pale glow approaches..."; }
+                        else if (night && roll < 0.78) { file = "EntityWatcher"; warn = "§9THE WATCHER observes you."; }
+                        else if (roll < 0.92) { file = "EntityShadowSteve"; warn = "§8Your shadow moves on its own..."; }
                         if (file) {
                             import("../entity/" + file + ".js").then(m => {
                                 const id = Date.now() % 100000 + Math.floor(Math.random() * 1000);
@@ -610,6 +666,7 @@ export default class World {
         if (t > 0.95 && h > 0.85) return "Jungle";
         if (t > 0.8 && h > 0.7) return "Swamp";
         if (h > 0.82 && t > 0.45 && t < 0.85) return "Cherry Grove";
+        if (t > 0.85 && h >= 0.25 && h < 0.5) return "Mountains";
         if (h > 0.6) return "Forest";
         if (h < 0.25 && t > 0.7) return "Desert";
         return "Plains";

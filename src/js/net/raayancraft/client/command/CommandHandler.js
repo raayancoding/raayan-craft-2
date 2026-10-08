@@ -7,6 +7,10 @@ import WeatherCommand from "./command/WeatherCommand.js";
 import KillCommand from "./command/KillCommand.js";
 import SeedCommand from "./command/SeedCommand.js";
 import SummonCommand from "./command/SummonCommand.js";
+import EnchantCommand from "./command/EnchantCommand.js";
+import BrewCommand from "./command/BrewCommand.js";
+import TradeCommand from "./command/TradeCommand.js";
+import NetherCommand from "./command/NetherCommand.js";
 
 export default class CommandHandler {
 
@@ -23,6 +27,10 @@ export default class CommandHandler {
         this.commands.push(new KillCommand());
         this.commands.push(new SeedCommand());
         this.commands.push(new SummonCommand());
+        this.commands.push(new EnchantCommand());
+        this.commands.push(new BrewCommand());
+        this.commands.push(new TradeCommand());
+        this.commands.push(new NetherCommand());
     }
 
     handleMessage(message) {

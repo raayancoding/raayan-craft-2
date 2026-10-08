@@ -54,6 +54,34 @@ export default class TerrainPatcher {
             for (let x = 2; x < tile; x += 4) ctx.fillRect(t.x + x, t.y + 1, 1, tile - 2);
         };
 
+        // Wood family tiles: tinted bark/planks + family leaves
+        const woodFamily = (side, top, leaf, plank, bark, barkStripe, leafBase, leafTint, plankTint) => {
+            copyTile(4, side); // oak log side base
+            const s = getTileXY(side);
+            ctx.fillStyle = bark;
+            ctx.fillRect(s.x, s.y, tile, tile);
+            ctx.fillStyle = barkStripe;
+            for (let x = 1; x < tile; x += 3) ctx.fillRect(s.x + x, s.y, 1, tile);
+            copyTile(5, top); // log top rings base
+            ctx.fillStyle = bark;
+            ctx.globalAlpha = 0.45;
+            const tp = getTileXY(top);
+            ctx.fillRect(tp.x, tp.y, tile, tile);
+            ctx.globalAlpha = 1.0;
+            copyTile(leafBase, leaf);
+            ctx.fillStyle = leafTint;
+            ctx.globalAlpha = 0.55;
+            const lf = getTileXY(leaf);
+            ctx.fillRect(lf.x, lf.y, tile, tile);
+            ctx.globalAlpha = 1.0;
+            copyTile(10, plank); // planks base
+            ctx.fillStyle = plankTint;
+            ctx.globalAlpha = 0.5;
+            const pl = getTileXY(plank);
+            ctx.fillRect(pl.x, pl.y, tile, tile);
+            ctx.globalAlpha = 1.0;
+        };
+
         try {
             // Ores on stone base (slot 0 = stone)
             noiseBlobs(15, 0, "#1a1a1a", 5, 3); // coal
@@ -175,6 +203,23 @@ export default class TerrainPatcher {
             stripes(50, 50, "#8a5a6e");
             fillTile(51, "#f2a7c3"); // cherry leaves
             noiseBlobs(51, 51, "#d87aa5", 6, 2);
+            // Wood families (side, top, leaves, planks)
+            woodFamily(52, 53, 54, 55, "#c8c0b0", "#3a3a3a", 6, "#b8d878", "#c8b890"); // birch
+            woodFamily(56, 57, 58, 59, "#5a4028", "#2e2012", 6, "#2f6b2f", "#6e5230"); // spruce
+            woodFamily(60, 61, 62, 63, "#6e5636", "#3e3020", 6, "#3fa83f", "#8a6e3e"); // jungle
+            woodFamily(64, 65, 66, 67, "#8a7a6a", "#4a3a2a", 6, "#9ab83a", "#a08050"); // acacia
+            woodFamily(68, 69, 70, 71, "#3e2a1a", "#1a1008", 6, "#2a5a1f", "#4a3420"); // dark oak
+            woodFamily(72, 73, 74, 75, "#7a4a3a", "#3a2018", 6, "#6a8a2f", "#8a5a40"); // mangrove
+            // New ores + note block
+            noiseBlobs(76, 0, "#2ae87a", 4, 3); // emerald ore
+            noiseBlobs(77, 44, "#e8d8c8", 5, 2); // nether quartz
+            noiseBlobs(78, 48, "#5a3a2a", 3, 2); // ancient debris
+            copyTile(10, 79); // note block (planks + dark fret)
+            {
+                const t = getTileXY(79);
+                ctx.fillStyle = "#3a2410";
+                for (let i = 0; i < 4; i++) ctx.fillRect(t.x + 2, t.y + 3 + i * 3, tile - 4, 1);
+            }
         } catch (e) {
             console.warn("Terrain patch failed", e);
         }

@@ -62,6 +62,9 @@ export default class WorldGenerator extends Generator {
             { id: () => BlockRegistry.COPPER_ORE.getId(), count: 6, minY: 20, maxY: 70, size: 5 },
             { id: () => BlockRegistry.AMETHYST.getId(), count: 2, minY: 5, maxY: 30, size: 3 },
             { id: () => BlockRegistry.DEEPSLATE.getId(), count: 6, minY: 2, maxY: 16, size: 6 },
+            { id: () => BlockRegistry.EMERALD_ORE.getId(), count: 3, minY: 10, maxY: 40, size: 3, gate: "mountains" },
+            { id: () => BlockRegistry.QUARTZ_ORE.getId(), count: 2, minY: 8, maxY: 48, size: 3 },
+            { id: () => BlockRegistry.ANCIENT_DEBRIS.getId(), count: 1, minY: 2, maxY: 12, size: 2 },
             { id: () => BlockRegistry.GRAVEL.getId(), count: 4, minY: 5, maxY: 60, size: 5 },
         ];
         // use chunk-local random for determinism
@@ -69,6 +72,7 @@ export default class WorldGenerator extends Generator {
             let oreId = 0;
             try { oreId = v.id(); } catch (e) { continue; }
             if (!oreId) continue;
+            if (v.gate === "mountains" && this.world.getHeightAt(chunkX * 16 + 8, chunkZ * 16 + 8) < this.seaLevel + 12) continue;
             for (let i = 0; i < v.count; i++) {
                 const vx = this.random.nextInt(16);
                 const vy = v.minY + this.random.nextInt(Math.max(1, v.maxY - v.minY));
@@ -95,6 +99,7 @@ export default class WorldGenerator extends Generator {
         if (t > 0.8 && h > 0.7) return "swamp";
         // Latest-version cherry grove: lush + mild
         if (h > 0.82 && t > 0.45 && t < 0.85) return "cherry";
+        if (t > 0.85 && h >= 0.25 && h < 0.5) return "mountains";
         if (h > 0.6) return "forest";
         if (h < 0.25 && t > 0.7) return "desert";
         return "plains";
@@ -116,6 +121,7 @@ export default class WorldGenerator extends Generator {
         else if (biome === "snow") density = 0.35;
         else if (biome === "swamp") density = 0.6;
         else if (biome === "cherry") density = 1.8;
+        else if (biome === "mountains") density = 0.5;
         else if (biome === "plains") density = 0.4;
 
         let amount = Math.floor((this.populationNoiseGenerator.perlin(absoluteX * 0.5, absoluteY * 0.5) / 8 + this.random.nextDouble() * 4 + 4) / 3 * density);
@@ -131,6 +137,32 @@ export default class WorldGenerator extends Generator {
         let treeSeed = this.random.seed;
         let treeGenerator = bigTree ? new BigTreeGenerator(this.world, treeSeed) : new TreeGenerator(this.world, treeSeed);
 
+        // Wood family per biome (encyclopedia: oak/birch/spruce/jungle/acacia/dark oak/mangrove/cherry)
+        const R = BlockRegistry;
+        const familyFor = (b) => {
+            try {
+                if (b === "forest") return [R.BIRCH_LOG.getId(), R.BIRCH_LEAVES.getId()];
+                if (b === "jungle") return [R.JUNGLE_LOG.getId(), R.JUNGLE_LEAVES.getId()];
+                if (b === "swamp") return [R.MANGROVE_LOG.getId(), R.MANGROVE_LEAVES.getId()];
+                if (b === "snow" || b === "mountains") return [R.SPRUCE_LOG.getId(), R.SPRUCE_LEAVES.getId()];
+                if (b === "plains" && this.random.nextInt(4) === 0) return [R.BIRCH_LOG.getId(), R.BIRCH_LEAVES.getId()];
+                if (b === "cherry") return [R.CHERRY_LOG.getId(), R.CHERRY_LEAVES.getId()];
+                if (b === "desert") return null;
+                if (this.random.nextInt(6) === 0) return [R.DARKOAK_LOG.getId(), R.DARKOAK_LEAVES.getId()];
+                if (this.random.nextInt(8) === 0) return [R.ACACIA_LOG.getId(), R.ACACIA_LEAVES.getId()];
+            } catch (e) { }
+            return [R.LOG.getId(), R.LEAVE.getId()];
+        };
+        const repaintTree = (tx, ty, tz, toLog, toLeaf) => {
+            const fromLog = R.LOG.getId(), fromLeaf = R.LEAVE.getId();
+            if (toLog === fromLog) return;
+            for (let dy = -1; dy < 9; dy++) for (let ox = -3; ox <= 3; ox++) for (let oz = -3; oz <= 3; oz++) {
+                const b = this.world.getBlockAt(tx + ox, ty + dy, tz + oz);
+                if (b === fromLeaf) this.world.setBlockAt(tx + ox, ty + dy, tz + oz, toLeaf);
+                else if (b === fromLog && dy >= 0) this.world.setBlockAt(tx + ox, ty + dy, tz + oz, toLog);
+            }
+        };
+
         // Plant the trees in the chunk
         for (let i = 0; i < amount; i++) {
             let totalX = absoluteX + this.random.nextInt(16) + 8;
@@ -140,18 +172,10 @@ export default class WorldGenerator extends Generator {
             // Generate tree at position
             treeGenerator.generateAtBlock(totalX, totalY, totalZ);
 
-            // Cherry grove (latest): repaint oak trees pink
-            if (biome === "cherry") {
-                try {
-                    const R = BlockRegistry;
-                    const logId = R.LOG.getId(), leafId = R.LEAVE.getId();
-                    const cLog = R.CHERRY_LOG.getId(), cLeaf = R.CHERRY_LEAVES.getId();
-                    for (let dy = -1; dy < 9; dy++) for (let ox = -3; ox <= 3; ox++) for (let oz = -3; oz <= 3; oz++) {
-                        const b = this.world.getBlockAt(totalX + ox, totalY + dy, totalZ + oz);
-                        if (b === leafId) this.world.setBlockAt(totalX + ox, totalY + dy, totalZ + oz, cLeaf);
-                        else if (b === logId && dy >= 0) this.world.setBlockAt(totalX + ox, totalY + dy, totalZ + oz, cLog);
-                    }
-                } catch (e) { }
+            // Repaint oak tree into the biome's wood family
+            const fam = familyFor(biome);
+            if (fam) {
+                try { repaintTree(totalX, totalY, totalZ, fam[0], fam[1]); } catch (e) { }
             }
         }
 

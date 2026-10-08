@@ -54,6 +54,10 @@ export default class PlayerEntity extends EntityLiving {
         this.experienceLevel = 0;
         this.foodTick = 0;
         this.airTick = 0;
+        // Encyclopedia systems: enchantments + potion effects
+        this.enchants = {}; // sharpness/protection/fortune/efficiency -> level
+        this.effects = {}; // strength/swiftness/regeneration/fireshield -> ticks left
+    }
     }
 
     isPlayer() { return true; }
@@ -194,12 +198,21 @@ export default class PlayerEntity extends EntityLiving {
         } else {
             this.air = Math.min(300, this.air + 10);
         }
-        // Lava damage
+        // Lava damage (fire resistance potion grants immunity)
         try {
             const lavaId = BlockRegistry.LAVA ? BlockRegistry.LAVA.getId() : -1;
             const feet = this.world.getBlockAt(Math.floor(this.x), Math.floor(this.y + 0.2), Math.floor(this.z));
-            if (feet === lavaId) this.damage(4, "lava");
+            if (feet === lavaId && !(this.effects && this.effects.fireshield > 0)) this.damage(4, "lava");
         } catch (e) { }
+        // Potion effect ticks (encyclopedia brewing)
+        if (this.effects) {
+            for (const k of Object.keys(this.effects)) {
+                if (this.effects[k] > 0) {
+                    this.effects[k]--;
+                    if (k === "regeneration" && this.effects[k] % 60 === 0) this.heal(1);
+                }
+            }
+        }
         // Hunger drain from movement
         if ((Math.abs(this.motionX) + Math.abs(this.motionZ) > 0.1 || this.jumping) && this.onGround) {
             this.foodTick++;
@@ -357,7 +370,8 @@ export default class PlayerEntity extends EntityLiving {
     }
 
     getAIMoveSpeed() {
-        return this.sprinting ? 0.13 : 0.1;
+        const swift = (this.effects && this.effects.swiftness > 0) ? 0.04 : 0;
+        return (this.sprinting ? 0.13 : 0.1) + swift;
     }
 
     moveRelative(forward, up, strafe, friction) {
