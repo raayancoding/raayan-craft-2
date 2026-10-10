@@ -97,6 +97,27 @@ export default class World {
             if (!this.bloodMoon && tod >= 12500 && tod < 12600 && Math.random() < 0.06) {
                 this.bloodMoon = true;
                 this.rayancraft.addMessageToChat("§c☠ BLOOD MOON RISES ☠ — survive the night!");
+                // Blood Moon boss (world event): an empowered myth rises near the player
+                try {
+                    if (this.rayancraft.isSingleplayer && this.rayancraft.isSingleplayer() && this.rayancraft.player) {
+                        const p = this.rayancraft.player;
+                        const files = ["Entity303", "EntityGiantAlex", "EntityBloodGolem"];
+                        const file = files[Math.floor(Math.random() * files.length)];
+                        import("../entity/" + file + ".js").then(m => {
+                            try {
+                                const e = new m.default(this.rayancraft, this, Date.now() % 100000);
+                                e.maxHealth = 150;
+                                e.health = 150;
+                                e.isMyth = true;
+                                e.isBoss = true;
+                                const bx = Math.floor(p.x + 8), bz = Math.floor(p.z + 8);
+                                e.setPosition(bx + 0.5, this.getHeightAt(bx, bz) + 1, bz + 0.5);
+                                this.addEntity(e);
+                                this.rayancraft.addMessageToChat("§4A Blood Moon Boss (" + file + ") has risen nearby!");
+                            } catch (err) { }
+                        }).catch(() => { });
+                    }
+                } catch (e) { }
             }
             if (this.bloodMoon && tod < 12000) {
                 this.bloodMoon = false;

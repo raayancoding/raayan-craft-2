@@ -19,6 +19,7 @@ Raayan Craft 2 is a voxel-based sandbox game that runs directly in your web brow
 - **Multiplayer Support** - Play with other players via WebRTC networking
 - **Chat System** - Communicate with other players in real-time
 - **GUI & Overlays** - User-friendly interface with game overlays
+- **Feature Roadmap** - Browse progression ideas and roadmap themes from the main menu or pause menu
 - **Command System** - Execute in-game commands (Help, Teleport, Time)
 - **Sound Management** - Audio effects and ambient sounds
 - **Networking** - Robust packet-based network communication

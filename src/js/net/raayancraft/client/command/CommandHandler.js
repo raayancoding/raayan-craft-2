@@ -11,6 +11,23 @@ import EnchantCommand from "./command/EnchantCommand.js";
 import BrewCommand from "./command/BrewCommand.js";
 import TradeCommand from "./command/TradeCommand.js";
 import NetherCommand from "./command/NetherCommand.js";
+import SethomeCommand from "./command/SethomeCommand.js";
+import HomeCommand from "./command/HomeCommand.js";
+import SpawnCommand from "./command/SpawnCommand.js";
+import WarpCommand from "./command/WarpCommand.js";
+import BiomeCommand from "./command/BiomeCommand.js";
+import StatsCommand from "./command/StatsCommand.js";
+import SkillsCommand from "./command/SkillsCommand.js";
+import QuestsCommand from "./command/QuestsCommand.js";
+import MilestonesCommand from "./command/MilestonesCommand.js";
+import MentorCommand from "./command/MentorCommand.js";
+import LegacyCommand from "./command/LegacyCommand.js";
+import TutorialCommand from "./command/TutorialCommand.js";
+import TitleCommand from "./command/TitleCommand.js";
+import ModifierCommand from "./command/ModifierCommand.js";
+import RespecCommand from "./command/RespecCommand.js";
+import TreasureCommand from "./command/TreasureCommand.js";
+import TrialCommand from "./command/TrialCommand.js";
 
 export default class CommandHandler {
 
@@ -31,6 +48,23 @@ export default class CommandHandler {
         this.commands.push(new BrewCommand());
         this.commands.push(new TradeCommand());
         this.commands.push(new NetherCommand());
+        this.commands.push(new SethomeCommand());
+        this.commands.push(new HomeCommand());
+        this.commands.push(new SpawnCommand());
+        this.commands.push(new WarpCommand());
+        this.commands.push(new BiomeCommand());
+        this.commands.push(new StatsCommand());
+        this.commands.push(new SkillsCommand());
+        this.commands.push(new QuestsCommand());
+        this.commands.push(new MilestonesCommand());
+        this.commands.push(new MentorCommand());
+        this.commands.push(new LegacyCommand());
+        this.commands.push(new TutorialCommand());
+        this.commands.push(new TitleCommand());
+        this.commands.push(new ModifierCommand());
+        this.commands.push(new RespecCommand());
+        this.commands.push(new TreasureCommand());
+        this.commands.push(new TrialCommand());
     }
 
     handleMessage(message) {

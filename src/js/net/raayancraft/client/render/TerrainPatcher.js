@@ -220,6 +220,46 @@ export default class TerrainPatcher {
                 ctx.fillStyle = "#3a2410";
                 for (let i = 0; i < 4; i++) ctx.fillRect(t.x + 2, t.y + 3 + i * 3, tile - 4, 1);
             }
+            // Expansion batch 2: more ores on stone base
+            noiseBlobs(80, 0, "#c8ccd8", 4, 3); // tin
+            noiseBlobs(81, 0, "#eef2ff", 4, 3); // silver
+            noiseBlobs(82, 0, "#5a5a72", 4, 3); // lead
+            noiseBlobs(83, 0, "#ff2a5a", 3, 3); // ruby
+            noiseBlobs(84, 0, "#2a7aff", 3, 3); // sapphire
+            noiseBlobs(85, 0, "#7aff2a", 3, 2); // uranium
+            noiseBlobs(86, 0, "#8ae8ff", 3, 2); // mithril
+            noiseBlobs(87, 0, "#ffbf2a", 4, 3); // topaz
+            // Expansion batch 2: stone family
+            fillTile(88, "#d8d8e2"); // marble
+            noiseBlobs(88, 88, "#b8b8c8", 5, 2);
+            fillTile(89, "#9a6a5a"); // granite
+            noiseBlobs(89, 89, "#6e463c", 6, 2);
+            fillTile(90, "#d8cfb0"); // limestone
+            noiseBlobs(90, 90, "#b8ac88", 5, 2);
+            fillTile(91, "#3a3a44"); // basalt
+            noiseBlobs(91, 91, "#23232b", 6, 2);
+            fillTile(92, "#4c4c58"); // slate
+            noiseBlobs(92, 92, "#33333d", 5, 2);
+            fillTile(93, "#c9c9c9"); // diorite
+            noiseBlobs(93, 93, "#8f8f8f", 6, 2);
+            fillTile(94, "#8a8a8a"); // andesite
+            noiseBlobs(94, 94, "#666666", 6, 2);
+            fillTile(95, "#b06030"); // red sandstone
+            noiseBlobs(95, 95, "#7e3f1e", 5, 2);
+            fillTile(96, "#2a1214"); // nether bricks
+            noiseBlobs(96, 96, "#5a2020", 5, 2);
+            fillTile(97, "#dcdca8"); // end stone
+            noiseBlobs(97, 97, "#b8b878", 6, 2);
+            fillTile(98, "#6a5a2a"); // lantern
+            noiseBlobs(98, 98, "#ffe9a0", 5, 3);
+            fillTile(99, "#6fb8b8"); // sea lantern
+            noiseBlobs(99, 99, "#e8ffff", 6, 2);
+            noiseBlobs(100, 14, "#4a8f3c", 5, 2); // mossy stone bricks on cobble base
+            noiseBlobs(101, 14, "#2a2a2a", 5, 2); // cracked cobble on cobble base
+            fillTile(102, "#5a3a1e"); // campfire
+            noiseBlobs(102, 102, "#ff8a2a", 6, 2);
+            fillTile(103, "#1c1c1c"); // coal block
+            noiseBlobs(103, 103, "#3d3d3d", 5, 2);
         } catch (e) {
             console.warn("Terrain patch failed", e);
         }

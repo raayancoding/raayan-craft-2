@@ -7,6 +7,7 @@ import TreeGenerator from "./structure/TreeGenerator.js";
 import BigTreeGenerator from "./structure/BigTreeGenerator.js";
 import Generator from "./Generator.js";
 import ChunkSection from "../ChunkSection.js";
+import Biome from "./Biome.js";
 
 export default class WorldGenerator extends Generator {
 
@@ -62,17 +63,26 @@ export default class WorldGenerator extends Generator {
             { id: () => BlockRegistry.COPPER_ORE.getId(), count: 6, minY: 20, maxY: 70, size: 5 },
             { id: () => BlockRegistry.AMETHYST.getId(), count: 2, minY: 5, maxY: 30, size: 3 },
             { id: () => BlockRegistry.DEEPSLATE.getId(), count: 6, minY: 2, maxY: 16, size: 6 },
-            { id: () => BlockRegistry.EMERALD_ORE.getId(), count: 3, minY: 10, maxY: 40, size: 3, gate: "mountains" },
+            { id: () => BlockRegistry.EMERALD_ORE.getId(), count: 3, minY: 10, maxY: 40, size: 3, gate: ["mountains", "stony_peaks"] },
             { id: () => BlockRegistry.QUARTZ_ORE.getId(), count: 2, minY: 8, maxY: 48, size: 3 },
             { id: () => BlockRegistry.ANCIENT_DEBRIS.getId(), count: 1, minY: 2, maxY: 12, size: 2 },
             { id: () => BlockRegistry.GRAVEL.getId(), count: 4, minY: 5, maxY: 60, size: 5 },
+            // Expansion batch 2 ores
+            { id: () => BlockRegistry.TIN_ORE.getId(), count: 7, minY: 10, maxY: 50, size: 5 },
+            { id: () => BlockRegistry.SILVER_ORE.getId(), count: 4, minY: 5, maxY: 30, size: 4 },
+            { id: () => BlockRegistry.LEAD_ORE.getId(), count: 5, minY: 5, maxY: 35, size: 4 },
+            { id: () => BlockRegistry.RUBY_ORE.getId(), count: 2, minY: 2, maxY: 18, size: 3 },
+            { id: () => BlockRegistry.SAPPHIRE_ORE.getId(), count: 2, minY: 2, maxY: 18, size: 3 },
+            { id: () => BlockRegistry.URANIUM_ORE.getId(), count: 2, minY: 2, maxY: 20, size: 3 },
+            { id: () => BlockRegistry.TOPAZ_ORE.getId(), count: 3, minY: 15, maxY: 45, size: 4, gate: ["desert", "red_desert", "badlands", "savanna"] },
+            { id: () => BlockRegistry.MITHRIL_ORE.getId(), count: 2, minY: 2, maxY: 12, size: 3, gate: ["mountains", "stony_peaks"] },
         ];
         // use chunk-local random for determinism
         for (const v of veins) {
             let oreId = 0;
             try { oreId = v.id(); } catch (e) { continue; }
             if (!oreId) continue;
-            if (v.gate === "mountains" && this.world.getHeightAt(chunkX * 16 + 8, chunkZ * 16 + 8) < this.seaLevel + 12) continue;
+            if (v.gate && !v.gate.includes(this.getBiomeAt(chunkX * 16 + 8, chunkZ * 16 + 8))) continue;
             for (let i = 0; i < v.count; i++) {
                 const vx = this.random.nextInt(16);
                 const vy = v.minY + this.random.nextInt(Math.max(1, v.maxY - v.minY));
@@ -93,15 +103,43 @@ export default class WorldGenerator extends Generator {
     getBiomeAt(x, z) {
         const t = this.world.getTemperature(x, z);
         const h = this.world.getHumidity(x, z);
-        if (t < 0.3) return "snow";
-        if (t > 1.3 && h < 0.3) return "desert";
-        if (t > 0.95 && h > 0.85) return "jungle";
-        if (t > 0.8 && h > 0.7) return "swamp";
+        const xi = Math.floor(x), zi = Math.floor(z);
+        // Ultra-rare mushroom island can surface in any lush area
+        if (h > 0.5 && Biome.hashNoise(xi, zi, 999) < 0.012) return "mushroom";
+        if (t < 0.18) return Biome.hashNoise(xi, zi, 11) < 0.25 ? "ice_spikes" : "snow";
+        if (t < 0.3) return (h > 0.45 && Biome.hashNoise(xi, zi, 12) < 0.5) ? "taiga" : "snow";
+        if (t > 1.3 && h < 0.3) {
+            const r = Biome.hashNoise(xi, zi, 13);
+            if (r < 0.16) return "badlands";
+            if (r < 0.28) return "red_desert";
+            return "desert";
+        }
+        if (t > 0.95 && h > 0.85) return Biome.hashNoise(xi, zi, 14) < 0.22 ? "bamboo" : "jungle";
+        if (t > 0.8 && h > 0.7) return Biome.hashNoise(xi, zi, 15) < 0.25 ? "mangrove" : "swamp";
         // Latest-version cherry grove: lush + mild
-        if (h > 0.82 && t > 0.45 && t < 0.85) return "cherry";
-        if (t > 0.85 && h >= 0.25 && h < 0.5) return "mountains";
-        if (h > 0.6) return "forest";
+        if (h > 0.82 && t > 0.45 && t < 0.85) return Biome.hashNoise(xi, zi, 16) < 0.2 ? "grove" : "cherry";
+        if (t > 0.85 && h >= 0.25 && h < 0.5) {
+            const r = Biome.hashNoise(xi, zi, 17);
+            if (r < 0.2) return "stony_peaks";
+            if (r < 0.32) return "canyon";
+            return "mountains";
+        }
+        // Savanna: hot with a little rain
+        if (t > 1.0 && h >= 0.3 && h < 0.5) return "savanna";
+        // Meadow: mild + moderate humidity (carved out of plains space)
+        if (t >= 0.55 && t <= 0.8 && h >= 0.4 && h <= 0.6) {
+            return Biome.hashNoise(xi, zi, 18) < 0.4 ? "meadow" : "plains";
+        }
+        if (h > 0.6) {
+            const r = Biome.hashNoise(xi, zi, 19);
+            if (r < 0.15) return "birch";
+            if (r < 0.25) return "dark_forest";
+            if (r < 0.33) return "flower_forest";
+            return "forest";
+        }
         if (h < 0.25 && t > 0.7) return "desert";
+        const r = Biome.hashNoise(xi, zi, 20);
+        if (r < 0.12) return "sunflower";
         return "plains";
     }
 
@@ -123,6 +161,23 @@ export default class WorldGenerator extends Generator {
         else if (biome === "cherry") density = 1.8;
         else if (biome === "mountains") density = 0.5;
         else if (biome === "plains") density = 0.4;
+        // Expansion biomes
+        else if (biome === "taiga") density = 1.4;
+        else if (biome === "ice_spikes") density = 0.05;
+        else if (biome === "meadow") density = 0.35;
+        else if (biome === "birch") density = 2.2;
+        else if (biome === "dark_forest") density = 3.0;
+        else if (biome === "flower_forest") density = 1.6;
+        else if (biome === "savanna") density = 0.4;
+        else if (biome === "badlands") density = 0.08;
+        else if (biome === "red_desert") density = 0.0;
+        else if (biome === "mangrove") density = 1.8;
+        else if (biome === "bamboo") density = 3.4;
+        else if (biome === "stony_peaks") density = 0.05;
+        else if (biome === "canyon") density = 0.15;
+        else if (biome === "sunflower") density = 0.4;
+        else if (biome === "mushroom") density = 0.12;
+        else if (biome === "grove") density = 1.8;
 
         let amount = Math.floor((this.populationNoiseGenerator.perlin(absoluteX * 0.5, absoluteY * 0.5) / 8 + this.random.nextDouble() * 4 + 4) / 3 * density);
         if (amount < 0) {
@@ -142,12 +197,15 @@ export default class WorldGenerator extends Generator {
         const familyFor = (b) => {
             try {
                 if (b === "forest") return [R.BIRCH_LOG.getId(), R.BIRCH_LEAVES.getId()];
-                if (b === "jungle") return [R.JUNGLE_LOG.getId(), R.JUNGLE_LEAVES.getId()];
-                if (b === "swamp") return [R.MANGROVE_LOG.getId(), R.MANGROVE_LEAVES.getId()];
-                if (b === "snow" || b === "mountains") return [R.SPRUCE_LOG.getId(), R.SPRUCE_LEAVES.getId()];
+                if (b === "birch" || b === "flower_forest") return [R.BIRCH_LOG.getId(), R.BIRCH_LEAVES.getId()];
+                if (b === "dark_forest") return [R.DARKOAK_LOG.getId(), R.DARKOAK_LEAVES.getId()];
+                if (b === "jungle" || b === "bamboo") return [R.JUNGLE_LOG.getId(), R.JUNGLE_LEAVES.getId()];
+                if (b === "swamp" || b === "mangrove") return [R.MANGROVE_LOG.getId(), R.MANGROVE_LEAVES.getId()];
+                if (b === "snow" || b === "mountains" || b === "taiga" || b === "stony_peaks") return [R.SPRUCE_LOG.getId(), R.SPRUCE_LEAVES.getId()];
+                if (b === "savanna" || b === "meadow" || b === "sunflower") return [R.ACACIA_LOG.getId(), R.ACACIA_LEAVES.getId()];
                 if (b === "plains" && this.random.nextInt(4) === 0) return [R.BIRCH_LOG.getId(), R.BIRCH_LEAVES.getId()];
-                if (b === "cherry") return [R.CHERRY_LOG.getId(), R.CHERRY_LEAVES.getId()];
-                if (b === "desert") return null;
+                if (b === "cherry" || b === "grove") return [R.CHERRY_LOG.getId(), R.CHERRY_LEAVES.getId()];
+                if (b === "desert" || b === "badlands" || b === "red_desert" || b === "canyon" || b === "mushroom" || b === "ice_spikes") return null;
                 if (this.random.nextInt(6) === 0) return [R.DARKOAK_LOG.getId(), R.DARKOAK_LEAVES.getId()];
                 if (this.random.nextInt(8) === 0) return [R.ACACIA_LOG.getId(), R.ACACIA_LEAVES.getId()];
             } catch (e) { }
@@ -203,7 +261,9 @@ export default class WorldGenerator extends Generator {
                         putSurface(absoluteX + this.random.nextInt(16), absoluteY + this.random.nextInt(16), R.CACTUS.getId());
                 }
             } else {
-                const flowerN = biome === "plains" ? 4 : 2;
+                const flowerN = biome === "flower_forest" ? 7
+                    : biome === "meadow" ? 5
+                    : biome === "plains" || biome === "sunflower" ? 4 : 2;
                 for (let i = 0; i < flowerN; i++) {
                     const r = this.random.nextInt(10);
                     if (r < 4 && R.YELLOW_FLOWER) putSurface(absoluteX + this.random.nextInt(16), absoluteY + this.random.nextInt(16), R.YELLOW_FLOWER.getId());
@@ -348,11 +408,24 @@ export default class WorldGenerator extends Generator {
                 // Default layer type ids
                 let topLayerTypeId = BlockRegistry.GRASS.getId();
                 let innerLayerTypeId = BlockRegistry.DIRT.getId();
-                if (biome === "desert") {
+            if (biome === "desert" || biome === "red_desert") {
                     topLayerTypeId = R.SAND.getId();
                     innerLayerTypeId = R.SANDSTONE ? R.SANDSTONE.getId() : R.SAND.getId();
-                } else if (biome === "snow") {
+                } else if (biome === "badlands") {
+                    topLayerTypeId = R.SANDSTONE ? R.SANDSTONE.getId() : R.SAND.getId();
+                    innerLayerTypeId = R.SANDSTONE ? R.SANDSTONE.getId() : R.SAND.getId();
+                } else if (biome === "red_desert") {
+                    topLayerTypeId = R.RED_SANDSTONE ? R.RED_SANDSTONE.getId() : R.SAND.getId();
+                    innerLayerTypeId = R.SAND.getId();
+                } else if (biome === "snow" || biome === "ice_spikes") {
                     topLayerTypeId = (R.SNOW_BLOCK ? R.SNOW_BLOCK.getId() : R.GRASS.getId());
+                    innerLayerTypeId = R.DIRT.getId();
+                } else if (biome === "stony_peaks" || biome === "canyon") {
+                    // Exposed stone cap
+                    topLayerTypeId = R.STONE.getId();
+                    innerLayerTypeId = R.STONE.getId();
+                } else if (biome === "mushroom") {
+                    topLayerTypeId = R.DIRT.getId();
                     innerLayerTypeId = R.DIRT.getId();
                 } else if (biome === "swamp" || biome === "jungle") {
                     topLayerTypeId = R.GRASS.getId();

@@ -1,6 +1,7 @@
 import GuiButton from "../widgets/GuiButton.js";
 import GuiScreen from "../GuiScreen.js";
 import GuiOptions from "./GuiOptions.js";
+import GuiRoadmap from "./GuiRoadmap.js";
 
 export default class GuiIngameMenu extends GuiScreen {
 
@@ -20,7 +21,11 @@ export default class GuiIngameMenu extends GuiScreen {
             this.rayancraft.displayScreen(new GuiOptions(this));
         }));
 
-        this.buttonList.push(new GuiButton("Save and Quit to Title", this.width / 2 - 100, y + 70, 200, 20, () => {
+        this.buttonList.push(new GuiButton("Feature Roadmap", this.width / 2 - 100, y + 48, 200, 20, () => {
+            this.rayancraft.displayScreen(new GuiRoadmap(this));
+        }));
+
+        this.buttonList.push(new GuiButton("Save and Quit to Title", this.width / 2 - 100, y + 94, 200, 20, () => {
             this.rayancraft.loadWorld(null);
         }));
     }

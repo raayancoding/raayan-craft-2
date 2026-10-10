@@ -58,7 +58,6 @@ export default class PlayerEntity extends EntityLiving {
         this.enchants = {}; // sharpness/protection/fortune/efficiency -> level
         this.effects = {}; // strength/swiftness/regeneration/fireshield -> ticks left
     }
-    }
 
     isPlayer() { return true; }
 
@@ -184,7 +183,8 @@ export default class PlayerEntity extends EntityLiving {
             if (this.motionY < 0) this.fallDistance -= this.motionY;
         } else {
             if (this.fallDistance > 3.2 && !this.flying) {
-                this.damage(Math.floor(this.fallDistance - 3.0), "fall");
+                const nofall = this.rayancraft && this.rayancraft.modifiers && this.rayancraft.modifiers.has("nofall");
+                if (!nofall) this.damage(Math.floor(this.fallDistance - 3.0), "fall");
             }
             this.fallDistance = 0;
         }

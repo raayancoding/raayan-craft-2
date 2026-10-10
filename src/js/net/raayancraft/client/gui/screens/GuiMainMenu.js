@@ -7,6 +7,7 @@ import MathHelper from "../../../util/MathHelper.js";
 import rayancraft from "../../Minecraft.js";
 import GuiCreateWorld from "./GuiCreateWorld.js";
 import GuiDirectConnect from "./GuiDirectConnect.js";
+import GuiRoadmap from "./GuiRoadmap.js";
 
 export default class GuiMainMenu extends GuiScreen {
 
@@ -29,10 +30,13 @@ export default class GuiMainMenu extends GuiScreen {
         this.buttonList.push(new GuiButton("Multiplayer", this.width / 2 - 100, y + 24, 200, 20, () => {
             this.rayancraft.displayScreen(new GuiDirectConnect(this));
         }));
-        this.buttonList.push(new GuiButton("Options...", this.width / 2 - 100, y + 24 * 2 + 12, 98, 20, () => {
+        this.buttonList.push(new GuiButton("Feature Roadmap", this.width / 2 - 100, y + 48, 200, 20, () => {
+            this.rayancraft.displayScreen(new GuiRoadmap(this));
+        }));
+        this.buttonList.push(new GuiButton("Options...", this.width / 2 - 100, y + 24 * 3 + 12, 98, 20, () => {
             this.rayancraft.displayScreen(new GuiOptions(this));
         }));
-        this.buttonList.push(new GuiButton("Quit Game", this.width / 2 + 2, y + 24 * 2 + 12, 98, 20, () => {
+        this.buttonList.push(new GuiButton("Quit Game", this.width / 2 + 2, y + 24 * 3 + 12, 98, 20, () => {
             this.rayancraft.stop();
         }));
 

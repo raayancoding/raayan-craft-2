@@ -14,7 +14,16 @@ export default class GuiCreateWorld extends GuiScreen {
 
         this.previousScreen = previousScreen;
         this.gameMode = 0; // 0 survival (pure default), 1 creative
+        this.hardcore = false; // permadeath: death deletes the world
+        this.origin = 0; // starter kit: settler / miner / hunter / arcanist
     }
+
+    static ORIGINS = [
+        { id: "settler", name: "Settler" },
+        { id: "miner", name: "Miner" },
+        { id: "hunter", name: "Hunter" },
+        { id: "arcanist", name: "Arcanist" },
+    ];
 
     init() {
         super.init();
@@ -31,7 +40,19 @@ export default class GuiCreateWorld extends GuiScreen {
         });
         this.buttonList.push(this.gameModeButton);
 
-        this.buttonList.push(new GuiButton("Create New World", this.width / 2 - 155, y + 110, 150, 20, () => {
+        this.hardcoreButton = new GuiButton("Hardcore: OFF", this.width / 2 - 100, y + 85, 200, 20, () => {
+            this.hardcore = !this.hardcore;
+            this.hardcoreButton.string = "Hardcore: " + (this.hardcore ? "ON (permadeath)" : "OFF");
+        });
+        this.buttonList.push(this.hardcoreButton);
+
+        this.originButton = new GuiButton("Origin: Settler", this.width / 2 - 100, y + 110, 200, 20, () => {
+            this.origin = (this.origin + 1) % GuiCreateWorld.ORIGINS.length;
+            this.originButton.string = "Origin: " + GuiCreateWorld.ORIGINS[this.origin].name;
+        });
+        this.buttonList.push(this.originButton);
+
+        this.buttonList.push(new GuiButton("Create New World", this.width / 2 - 155, y + 140, 150, 20, () => {
             let seed = this.fieldSeed.getText();
             if (seed.length === 0) {
                 seed = new Random().nextLong();
@@ -45,14 +66,16 @@ export default class GuiCreateWorld extends GuiScreen {
 
             // Load world
             let world = new World(this.rayancraft);
+            world.hardcore = this.hardcore;
             world.setChunkProvider(new ChunkProviderGenerate(world, seed));
             world.getChunkProvider().findSpawn();
 
             this.rayancraft.playerController = new PlayerController(this.rayancraft);
             this.rayancraft.pendingGameMode = this.gameMode;
+            this.rayancraft.pendingOrigin = GuiCreateWorld.ORIGINS[this.origin].id;
             this.rayancraft.loadWorld(world);
         }));
-        this.buttonList.push(new GuiButton("Cancel", this.width / 2 + 5, y + 110, 150, 20, () => {
+        this.buttonList.push(new GuiButton("Cancel", this.width / 2 + 5, y + 140, 150, 20, () => {
             this.rayancraft.displayScreen(this.previousScreen);
         }));
     }

@@ -26,6 +26,19 @@ import FocusStateType from "../util/FocusStateType.js";
 import Session from "../util/Session.js";
 import PlayerControllerMultiplayer from "./network/controller/PlayerControllerMultiplayer.js";
 import TerrainPatcher from "./render/TerrainPatcher.js";
+import DailyChallenge from "./progression/DailyChallenge.js";
+import Exploration from "./progression/Exploration.js";
+import Skills from "./progression/Skills.js";
+import Quests from "./progression/Quests.js";
+import Stats from "./progression/Stats.js";
+import Tutorial from "./progression/Tutorial.js";
+import Titles from "./progression/Titles.js";
+import Modifiers from "./progression/Modifiers.js";
+import Trial from "./progression/Trial.js";
+import Treasure from "./progression/Treasure.js";
+import AdaptiveMilestones from "./progression/AdaptiveMilestones.js";
+import Mentor from "./progression/Mentor.js";
+import Legacy from "./progression/Legacy.js";
 
 export default class rayancraft {
 
@@ -83,6 +96,21 @@ export default class rayancraft {
 
         // Achievements + toasts
         this.achievements = new Achievements(this);
+
+        // Progression systems (daily challenge + exploration)
+        this.dailyChallenge = new DailyChallenge(this);
+        this.exploration = new Exploration(this);
+        this.skills = new Skills(this);
+        this.quests = new Quests(this);
+        this.stats = new Stats(this);
+        this.titles = new Titles(this);
+        this.modifiers = new Modifiers(this);
+        this.trial = new Trial(this);
+        this.treasure = new Treasure(this);
+        this.tutorial = new Tutorial(this);
+        this.milestones = new AdaptiveMilestones(this);
+        this.mentor = new Mentor(this);
+        this.legacy = new Legacy(this);
 
         // Chest storage: key "x,y,z" -> array of 27 block ids
         this.chestData = {};
@@ -164,6 +192,9 @@ export default class rayancraft {
             // Create world
             this.world = world;
             this.worldRenderer.scene.add(this.world.group);
+            if (world.hardcore) {
+                try { this.addMessageToChat("Hardcore mode: death is permanent!"); } catch (e) { }
+            }
 
             // Create player
             this.player = this.playerController.createPlayer(this.world);
@@ -177,6 +208,11 @@ export default class rayancraft {
                 this.player.inventory.addItem(5);
                 this.player.inventory.addItem(50);
                 this.player.inventory.addItem(58);
+            }
+            // Origin starter kits (character origin choices alter starting gear)
+            if (this.pendingOrigin) {
+                try { this.applyOriginKit(this.pendingOrigin); } catch (e) { }
+                this.pendingOrigin = undefined;
             }
             this.world.addEntity(this.player);
 
@@ -196,6 +232,39 @@ export default class rayancraft {
 
     addMessageToChat(message) {
         this.ingameOverlay.chatOverlay.addMessage(message);
+    }
+
+    // Origin starter kits: wood/torches/dirt/sand/sapling for settlers,
+    // stone + coal for miners, food + wool for hunters, glow + books for arcanists.
+    applyOriginKit(origin) {
+        const kits = {
+            settler: [5, 50, 50, 50, 3, 12, 6],
+            miner: [50, 50, 50, 4, 4, 16, 5],
+            hunter: [103, 86, 50, 5, 35, 12],
+            arcanist: [89, 47, 25, 50, 5, 3],
+        };
+        const kit = kits[origin];
+        if (!kit || !this.player) return;
+        for (const id of kit) {
+            try { this.player.inventory.addItem(id); } catch (e) { }
+        }
+        const names = { settler: "Settler", miner: "Miner", hunter: "Hunter", arcanist: "Arcanist" };
+        try { this.addMessageToChat("Origin: " + (names[origin] || origin) + " — your journey begins with purpose."); } catch (e) { }
+    }
+
+    // Central XP grant: honors the doublexp modifier, preserves the
+    // (level+1)*10 level-up curve, announces level-ups.
+    addXP(amount) {        try {
+            const p = this.player;
+            if (!p || !(amount > 0)) return;
+            let n = amount;
+            if (this.modifiers && this.modifiers.has("doublexp")) n *= 2;
+            p.experience = (p.experience || 0) + n;
+            while (p.experience >= (p.experienceLevel + 1) * 10) {
+                p.experienceLevel++;
+                this.addMessageToChat("§aLevel up! Level " + p.experienceLevel);
+            }
+        } catch (e) { }
     }
 
     requestNextFrame() {
@@ -315,6 +384,18 @@ export default class rayancraft {
 
             // Tick particle renderer
             this.particleRenderer.onTick();
+
+            // Tick progression systems (internally throttled, failure-isolated)
+            try { this.dailyChallenge.tick(); } catch (e) { }
+            try { this.exploration.tick(); } catch (e) { }
+            try { this.stats.tick(); } catch (e) { }
+            try { this.quests.tick(); } catch (e) { }
+            try { this.milestones.tick(); } catch (e) { }
+            try { this.mentor.tick(); } catch (e) { }
+            try { this.legacy.tick(); } catch (e) { }
+            try { this.trial.tick(); } catch (e) { }
+            try { this.treasure.tick(); } catch (e) { }
+            try { this.tutorial.tick(); } catch (e) { }
         }
 
         // Tick the screen
@@ -408,7 +489,9 @@ export default class rayancraft {
 
     onMouseClicked(button) {
         if (this.window.isLocked()) {
-            let hitResult = this.player.rayTrace(5, this.timer.partialTicks);
+            // Building skill: +1 block reach every 5 levels (max +2)
+            let reach = 5 + (this.skills ? Math.min(2, Math.floor(this.skills.level("building") / 5)) : 0);
+            let hitResult = this.player.rayTrace(reach, this.timer.partialTicks);
 
             // Destroy block
             if (button === 0) {
@@ -429,7 +512,7 @@ export default class rayancraft {
                         const crit = !this.player.onGround && this.player.motionY < -0.05;
                         const ench = this.player.enchants || {};
                         const eff = this.player.effects || {};
-                        let dmg = 4 + (ench.sharpness || 0) * 1.5 + (eff.strength > 0 ? 2 : 0);
+                        let dmg = 4 + (ench.sharpness || 0) * 1.5 + (eff.strength > 0 ? 2 : 0) + (this.skills ? Math.floor(this.skills.level("combat") / 4) : 0);
                         if (crit) dmg *= 1.5;
                         best.damage(Math.round(dmg), "generic");
                         this.player.swingArm();
@@ -440,6 +523,26 @@ export default class rayancraft {
                         if (best.isDead) {
                             this.addMessageToChat("§7Slain " + best.constructor.name);
                             if (best.isMyth && this.achievements) this.achievements.unlock("myth");
+                            // Progression hooks: combat skill, stats, quests, boss reward
+                            try {
+                                if (this.skills) this.skills.xp("combat", 8);
+                                if (this.stats) this.stats.event("kills");
+                                if (this.quests) this.quests.event("kill");
+                                if (this.milestones) this.milestones.event("kill");
+                                if (this.mentor) this.mentor.event("kill");
+                                if (this.trial) this.trial.event("kill");
+                                if (best.isGuardian) {
+                                    this.addXP(25);
+                                    this.addMessageToChat("§bGuardian felled! +25 XP");
+                                    if (this.achievements) this.achievements.unlock("guardian");
+                                }
+                                if (best.isBoss) {
+                                    this.addXP(50);
+                                    this.addMessageToChat("§6BOSS SLAIN! +50 XP");
+                                    if (this.achievements) this.achievements.unlock("boss");
+                                    if (this.legacy) this.legacy.recordFeat("Boss Slayer");
+                                }
+                            } catch (e) { }
                         }
                         this.worldRenderer.flushRebuild = true;
                         return;
@@ -473,20 +576,20 @@ export default class rayancraft {
 
                             // Survival: small XP + hunger cost; Creative: free
                             if (survival) {
-                                // Ores drop XP (pure)
+                                // Ores drop XP (pure) + legacy museum bonus (passive world bonus)
                                 if ([14, 15, 16, 56, 73, 21, 129, 155, 201].includes(typeId)) {
-                                    this.player.experience += 3;
-                                    if (this.player.experience >= (this.player.experienceLevel + 1) * 10) {
-                                        this.player.experienceLevel++;
-                                        this.addMessageToChat("§aLevel up! Level " + this.player.experienceLevel);
-                                    }
+                                    let bonus = 0;
+                                    try { bonus = this.legacy ? this.legacy.museumBonusXp() : 0; } catch (e) { }
+                                    this.addXP(3 + bonus);
                                     if (typeId === 56 && this.achievements) this.achievements.unlock("diamond");
                                     if (typeId === 201 && this.achievements) this.achievements.unlock("copper");
                                 }
                                 // Food from blocks: melons/pumpkins feed you, leaves may drop apples
                                 if (typeId === 103) { this.player.hunger = Math.min(20, this.player.hunger + 4); this.addMessageToChat("§aYum! +4 hunger"); }
                                 if (typeId === 86) { this.player.hunger = Math.min(20, this.player.hunger + 2); }
-                                if (typeId === 18 && Math.random() < 0.1) { this.player.hunger = Math.min(20, this.player.hunger + 2); this.addMessageToChat("§aAn apple fell from the leaves! +2 hunger"); }
+                                // Gathering skill improves apple drops from leaves
+                                let appleChance = 0.1 + (this.skills ? Math.min(0.2, this.skills.level("gathering") * 0.015) : 0);
+                                if (typeId === 18 && Math.random() < appleChance) { this.player.hunger = Math.min(20, this.player.hunger + 2); this.addMessageToChat("§aAn apple fell from the leaves! +2 hunger"); }
                                 this.player.hunger = Math.max(0, this.player.hunger - 0.1);
                             }
 
@@ -509,12 +612,37 @@ export default class rayancraft {
                                     this.addMessageToChat("§bFortune procs! Bonus drops");
                                 }
                                 if ([14, 15, 16, 56, 73, 21, 129, 155, 201].includes(typeId) && ench2.efficiency > 0) {
-                                    this.player.experience += 2 * ench2.efficiency;
+                                    this.addXP(2 * ench2.efficiency);
                                 }
                             } catch (e) { }
 
                             // Destroy block
                             this.world.setBlockAt(hitResult.x, hitResult.y, hitResult.z, 0);
+                            // Progression hooks: skills, stats, quests
+                            try {
+                                const ORES = [14, 15, 16, 56, 73, 21, 129, 155, 201, 231, 232, 233, 234, 235, 236, 237, 238];
+                                if (this.skills) {
+                                    if (ORES.includes(typeId)) {
+                                        this.skills.xp("mining", 4);
+                                        // Skilled hands: bonus ore drops (max 25%)
+                                        if (Math.random() < Math.min(0.25, this.skills.level("mining") * 0.02)) {
+                                            this.player.inventory.addItem(typeId);
+                                        }
+                                    } else if (typeId === 1 || typeId === 4 || typeId === 203) {
+                                        this.skills.xp("mining", 1);
+                                    }
+                                    const LOGS = [17, 205, 210, 213, 216, 219, 222, 225];
+                                    const GREENS = [18, 206, 211, 214, 217, 220, 223, 226, 37, 38, 6, 103, 86];
+                                    if (LOGS.includes(typeId) || GREENS.includes(typeId)) {
+                                        this.skills.xp("gathering", 2);
+                                    }
+                                }
+                                if (this.stats) this.stats.event("broken");
+                                if (this.quests) this.quests.event("break", typeId);
+                                if (this.milestones) this.milestones.event("break", typeId);
+                                if (this.mentor) this.mentor.event("break", typeId);
+                                if (this.trial) this.trial.event("break", typeId);
+                            } catch (e) { }
                         }
                     }
                 }
@@ -582,6 +710,14 @@ export default class rayancraft {
                         if (typeId !== 0 && canReplace) {
                             // Place block
                             this.world.setBlockAt(x, y, z, typeId);
+                            // Progression hooks: building skill, stats, quests
+                            try {
+                                if (this.skills) this.skills.xp("building", 1);
+                                if (this.stats) this.stats.event("placed");
+                                if (this.quests) this.quests.event("place", typeId);
+                                if (this.milestones) this.milestones.event("place", typeId);
+                                if (this.mentor) this.mentor.event("place", typeId);
+                            } catch (e) { }
 
                             // Swing player arm
                             this.player.swingArm();

@@ -21,6 +21,8 @@ export default class GameWindow {
         this.mouseInsideWindow = false;
 
         this.mouseDownInterval = null;
+        this.pointerLockRequestInFlight = false;
+        this.lastPointerLockAttempt = 0;
         this.focusState = FocusStateType.EXITED;
         this.lastIngameSwitchTime = 0;
 
@@ -479,10 +481,37 @@ export default class GameWindow {
         if (this.mouseInsideWindow && this.focusState.isLock() !== this.isCursorLockedToCanvas()) {
             // Request cursor lock depending on the state
             if (this.focusState.isLock()) {
-                this.canvas.requestPointerLock();
+                this.requestPointerLockSafe();
             } else {
                 document.exitPointerLock();
             }
+        }
+    }
+
+    requestPointerLockSafe() {
+        // Browsers rate-limit pointer lock requests (and require user engagement).
+        // This is called on every mousemove, so never issue overlapping requests and
+        // back off after an attempt — otherwise each denial rejects with
+        // NotAllowedError ("Too many pointer lock requests in a short window of time")
+        // and spams the console with unhandled rejections.
+        const now = Date.now();
+        if (this.pointerLockRequestInFlight || now - this.lastPointerLockAttempt < 1500) {
+            return;
+        }
+        this.pointerLockRequestInFlight = true;
+        this.lastPointerLockAttempt = now;
+        try {
+            const result = this.canvas.requestPointerLock();
+            if (result && typeof result.then === "function") {
+                const done = () => { this.pointerLockRequestInFlight = false; };
+                result.then(done, done);
+            } else {
+                // Older browsers return undefined: release the guard via timeout so a
+                // silent denial can't wedge the flag forever.
+                setTimeout(() => { this.pointerLockRequestInFlight = false; }, 1500);
+            }
+        } catch (err) {
+            this.pointerLockRequestInFlight = false;
         }
     }
 

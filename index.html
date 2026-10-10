@@ -15,11 +15,14 @@
         <div id="canvas-container" class="fullscreen"></div>
     </div>
 
-    <script type="module" src="libraries/pako.es5.min.js"></script>
-    <script type="module" src="libraries/aes.js"></script>
-    <script type="module" src="libraries/asn1.js"></script>
-    <script type="module" src="libraries/bigint-mod-arith.js"></script>
-    <script type="module" src="libraries/sha1.min.js"></script>
+    <!-- Classic (non-module) vendor scripts: they expose window globals
+         (pako, aesjs, ASN1, bigint-mod-arith, sha1) used by the game.
+         They must NOT be loaded as type="module". -->
+    <script src="libraries/pako.es5.min.js"></script>
+    <script src="libraries/aes.js"></script>
+    <script src="libraries/asn1.js"></script>
+    <script src="libraries/bigint-mod-arith.js"></script>
+    <script src="libraries/sha1.min.js"></script>
     <script type="module" src="src/js/Start.js"></script>
     <script>
         // Plain-script boot check: runs even when ES modules are blocked (file://)

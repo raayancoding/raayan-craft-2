@@ -113,6 +113,33 @@ export class BlockRegistry {
         BlockRegistry.QUARTZ_ORE = new BlockOre(155, 77);
         BlockRegistry.ANCIENT_DEBRIS = new BlockOre(230, 78);
         BlockRegistry.NOTE_BLOCK = new BlockSimple(25, 79, { sound: Block.sounds.wood });
+        // ---- Expansion batch 2: more ores (slots 80-87) ----
+        BlockRegistry.TIN_ORE = new BlockOre(231, 80);
+        BlockRegistry.SILVER_ORE = new BlockOre(232, 81);
+        BlockRegistry.LEAD_ORE = new BlockOre(233, 82);
+        BlockRegistry.RUBY_ORE = new BlockOre(234, 83, 4);
+        BlockRegistry.SAPPHIRE_ORE = new BlockOre(235, 84, 4);
+        BlockRegistry.URANIUM_ORE = new BlockOre(236, 85, 4);
+        BlockRegistry.MITHRIL_ORE = new BlockOre(237, 86, 5);
+        BlockRegistry.TOPAZ_ORE = new BlockOre(238, 87);
+        // ---- Expansion batch 2: stone + decor (slots 88-103) ----
+        const stoneSound = { sound: Block.sounds.stone };
+        BlockRegistry.MARBLE = new BlockSimple(239, 88, stoneSound);
+        BlockRegistry.GRANITE = new BlockSimple(240, 89, stoneSound);
+        BlockRegistry.LIMESTONE = new BlockSimple(241, 90, stoneSound);
+        BlockRegistry.BASALT = new BlockSimple(242, 91, stoneSound);
+        BlockRegistry.SLATE = new BlockSimple(243, 92, stoneSound);
+        BlockRegistry.DIORITE = new BlockSimple(244, 93, stoneSound);
+        BlockRegistry.ANDESITE = new BlockSimple(245, 94, stoneSound);
+        BlockRegistry.RED_SANDSTONE = new BlockSimple(246, 95, { sound: Block.sounds.sand });
+        BlockRegistry.NETHER_BRICKS = new BlockSimple(247, 96, stoneSound);
+        BlockRegistry.END_STONE = new BlockSimple(248, 97, stoneSound);
+        BlockRegistry.LANTERN = new BlockSimple(249, 98, { sound: Block.sounds.glass, light: 14 });
+        BlockRegistry.SEA_LANTERN = new BlockSimple(250, 99, { sound: Block.sounds.glass, light: 15 });
+        BlockRegistry.MOSSY_STONE_BRICKS = new BlockSimple(251, 100, stoneSound);
+        BlockRegistry.CRACKED_COBBLE = new BlockSimple(252, 101, stoneSound);
+        BlockRegistry.CAMPFIRE = new BlockSimple(253, 102, { sound: Block.sounds.wood, light: 12 });
+        BlockRegistry.COAL_BLOCK = new BlockSimple(254, 103, stoneSound);
         // Solid sounds fix
         BlockRegistry.SANDSTONE.sound = Block.sounds.sand;
     }

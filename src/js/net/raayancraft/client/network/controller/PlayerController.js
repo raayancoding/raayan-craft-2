@@ -15,7 +15,12 @@ export default class PlayerController {
         if (message.startsWith("/")) {
             this.rayancraft.commandHandler.handleMessage(message.substring(1));
         } else {
-            this.rayancraft.addMessageToChat("<" + this.rayancraft.player.username + "> " + message);
+            let name = this.rayancraft.player.username;
+            try {
+                const tag = this.rayancraft.titles ? this.rayancraft.titles.activeTag() : "";
+                if (tag) name = tag + " " + name;
+            } catch (e) { }
+            this.rayancraft.addMessageToChat("<" + name + "> " + message);
         }
     }
 }
